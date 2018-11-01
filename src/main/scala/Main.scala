@@ -1,5 +1,4 @@
 import cats.effect._
-
 import cats.implicits._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.io._
@@ -22,7 +21,11 @@ object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] = {
 
-    (new TwitterPipeline).run.unsafeRunAsyncAndForget()
+    (new TwitterPipeline)
+      .tweetStream
+      .compile
+      .drain
+      .unsafeRunAsyncAndForget()
 
     BlazeServerBuilder[IO]
       .bindHttp(8080, "localhost")

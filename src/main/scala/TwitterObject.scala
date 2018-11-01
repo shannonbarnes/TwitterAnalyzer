@@ -1,8 +1,6 @@
 import io.circe.{Decoder, FailedCursor}
 import io.circe.generic.auto._
 
-
-
 object TwitterObject {
 
   implicit val decodeTwitterObject: Decoder[TwitterObject] = Decoder.instance(c =>

@@ -2,8 +2,6 @@ import scala.language.implicitConversions
 
 object FractionSyntax {
 
-  type Percentage = Double
-
   def round(p: Fraction, mult: Int = 1): Double = {
     if (p.den <= 0) 0 else
     BigDecimal(p.num.toDouble/p.den * mult).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble

@@ -6,7 +6,7 @@ import scala.util.Try
 
 object TweetSyntax {
 
-  implicit class twitterExtractor(t: Tweet) {
+  implicit class tweetExtractor(t: Tweet) {
     def hashTags: List[String] = t.entities.hashtags.map(_.text)
 
     def emojis: List[String] = EmojiParser.extractEmojis(t.text).asScala.toList

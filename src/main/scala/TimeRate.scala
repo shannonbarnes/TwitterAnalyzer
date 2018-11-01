@@ -4,23 +4,25 @@ import FractionSyntax._
 
 object TimeRate {
 
+  type CountPerSecond = List[Int]
+
   private val seconds = 1
   private val minutes = 60
   private val hour = 3600
   private val initFraction = Fraction(0, 1)
 
-  def ratePerSecond(list: List[Int]): Fraction = calculateRate(seconds, list)
-  def ratePerMinute(list: List[Int]): Fraction = calculateRate(minutes, list)
-  def ratePerHour(list: List[Int]): Fraction = calculateRate(hour, list)
+  def ratePerSecond(list: CountPerSecond): Fraction = calculateRate(seconds, list)
+  def ratePerMinute(list: CountPerSecond): Fraction = calculateRate(minutes, list)
+  def ratePerHour(list: CountPerSecond): Fraction = calculateRate(hour, list)
 
-  def calculateRates(list: List[Int]): (Double, Double, Double) = {
+  def calculateRates(list: CountPerSecond): (Double, Double, Double) = {
     (ratePerSecond(list).roundedDouble, ratePerMinute(list).roundedDouble, ratePerHour(list).roundedDouble)
   }
 
-  private[this] def calculateRate(bucketSize: Int, list: List[Int]): Fraction = {
+  private[this] def calculateRate(bucketSize: Int, list: CountPerSecond): Fraction = {
 
     @tailrec
-    def doCalc(list: List[Int], bucketLeft: Int, bucketSize: Int, f: Fraction, lastValue: Int): Fraction =
+    def doCalc(list: CountPerSecond, bucketLeft: Int, bucketSize: Int, f: Fraction, lastValue: Int): Fraction =
       list match {
         case Nil if bucketLeft == 0 => f
         case Nil => f.addToNum(bucketLeft * lastValue)
@@ -32,18 +34,5 @@ object TimeRate {
 
   }
 
-
-
 }
 
-
-
-class TimeRate {
-  val q: mutable.Queue[Int] = mutable.Queue()
-
-  def insert(n: Int) = q.enqueue(n)
-
-
-
-
-}
