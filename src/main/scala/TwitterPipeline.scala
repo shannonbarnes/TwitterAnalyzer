@@ -35,7 +35,6 @@ class TwitterPipeline(implicit t: Timer[IO]) {
       token = Some(oauth1.Token(accessToken, accessTokenSecret)))
   }
 
-
   def tweetStream: Stream[IO, Unit] = {
 
     val source = for {
