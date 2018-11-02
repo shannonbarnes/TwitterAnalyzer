@@ -15,9 +15,6 @@ class PriorityListSpec extends FlatSpec with Matchers {
   "PriorityList" should "return a list of ordered items" in {
     val p = new PriorityList(10)
     setup(p)
-
-    println(p.sortedList)
-
     p.sortedList should be (Seq(NameCount("D", 5), NameCount("C", 4), NameCount("A", 3), NameCount("B", 1)))
 
   }
@@ -25,7 +22,6 @@ class PriorityListSpec extends FlatSpec with Matchers {
   it should "only return max items" in {
     val p = new PriorityList(2)
     setup(p)
-
     p.sortedList should be (Seq(NameCount("D", 5), NameCount("C", 4)))
   }
 
