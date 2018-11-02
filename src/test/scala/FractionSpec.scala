@@ -2,7 +2,7 @@ import FractionSyntax._
 import org.scalatest._
 
 
-class FractionTest extends FlatSpec with Matchers {
+class FractionSpec extends FlatSpec with Matchers {
 
   private def test(in: Double, expectedValue: Double) =  in should be (expectedValue)
 

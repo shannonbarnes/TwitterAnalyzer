@@ -49,7 +49,7 @@ object InMemoryDataStore extends DataStoreSink {
   }
 
   val buffer: ListBuffer[Int] = ListBuffer()
-  def allCount: Int = deleteCount + tweetCount
+  def allCount: Int = deleteCount + tweetCount + parseErrors
   var deleteCount: Int = 0
   var parseErrors: Int = 0
   var tweetCount: Int = 0

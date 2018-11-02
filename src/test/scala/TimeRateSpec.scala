@@ -1,7 +1,7 @@
 import org.scalatest._
 import TimeRate._
 
-class TimeRateTest extends FlatSpec with Matchers {
+class TimeRateSpec extends FlatSpec with Matchers {
 
   val l1 = List(5)
   val l2 = List(5, 6)

@@ -35,8 +35,7 @@ class TwitterPipeline(implicit t: Timer[IO]) {
       token = Some(oauth1.Token(accessToken, accessTokenSecret)))
   }
 
-  def tweetStream: Stream[IO, Unit] = {
-
+  protected def source: Stream[IO, TwitterObject] = {
     val source = for {
       httpClient <- BlazeClientBuilder(global).stream
       oauth      <- Stream.eval(authenticate)
@@ -49,6 +48,10 @@ class TwitterPipeline(implicit t: Timer[IO]) {
         case Right(tweet) => tweet
         case Left(_) => ParseError
       }
+  }
+
+  def tweetStream: Stream[IO, Unit] = {
+    source
       .groupWithin(Int.MaxValue, collectDuration)
       .to(InMemoryDataStore)
   }

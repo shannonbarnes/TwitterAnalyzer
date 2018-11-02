@@ -6,7 +6,7 @@ import jawn.Parser
 import scala.util.Success
 
 
-class DecodeTwitterObjectTest extends FlatSpec with Matchers {
+class DecodeTwitterObjectSpec extends FlatSpec with Matchers {
 
 
   implicit val f = io.circe.jawn.CirceSupportParser.facade

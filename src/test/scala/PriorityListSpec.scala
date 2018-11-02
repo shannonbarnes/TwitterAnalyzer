@@ -1,7 +1,7 @@
 import org.scalatest._
 
 
-class PriorityListTest extends FlatSpec with Matchers {
+class PriorityListSpec extends FlatSpec with Matchers {
    def setup(p: PriorityList): Unit = {
      p.insert(List("A", "B", "A", "C"))
      p.insert("C")
