@@ -1,6 +1,6 @@
 # TwitterAnalyzer
 
-Streams sample Twitter API and analyzes tweets and gathers stats.
+Streams from sample Twitter API and analyzes tweets and gathers stats.
 Uses `http4s` client and server, and `fs2` with `cats-effect`
 
 Perform a sbt run to start program
