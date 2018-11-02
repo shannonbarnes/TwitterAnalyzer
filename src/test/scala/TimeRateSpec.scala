@@ -25,7 +25,6 @@ class TimeRateSpec extends FlatSpec with Matchers {
     ratePerHour(l3) should be (Fraction(5 + 6 + 7 * (3600 - 2), 1))
   }
 
-
   it should "give proper rates for larger lists" in {
     val list = List.fill(60)(2)
     ratePerSecond(list) should be (Fraction(60 * 2, 60))
@@ -44,7 +43,4 @@ class TimeRateSpec extends FlatSpec with Matchers {
     ratePerHour(list3) should be (Fraction(2 * 3600, 1))
 
   }
-
-
-
 }

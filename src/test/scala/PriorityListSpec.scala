@@ -1,6 +1,5 @@
 import org.scalatest._
 
-
 class PriorityListSpec extends FlatSpec with Matchers {
    def setup(p: PriorityList): Unit = {
      p.insert(List("A", "B", "A", "C"))
@@ -12,7 +11,6 @@ class PriorityListSpec extends FlatSpec with Matchers {
      p.insert("D")
      p.insert("A")
    }
-
 
   "PriorityList" should "return a list of ordered items" in {
     val p = new PriorityList(10)
@@ -35,5 +33,4 @@ class PriorityListSpec extends FlatSpec with Matchers {
     val p = new PriorityList(40)
     p.sortedList should be (Seq.empty)
   }
-
 }

@@ -1,13 +1,9 @@
 
 import org.scalatest._
-import TwitterObject._
 import jawn.Parser
-
 import scala.util.Success
 
-
 class DecodeTwitterObjectSpec extends FlatSpec with Matchers {
-
 
   implicit val f = io.circe.jawn.CirceSupportParser.facade
   
@@ -29,7 +25,6 @@ class DecodeTwitterObjectSpec extends FlatSpec with Matchers {
     
     myResult.as[TwitterObject] should be (Right(DeleteTweet))
   }
-
 
   it should "decode a tweet object" in {
     val json =
@@ -69,7 +64,5 @@ class DecodeTwitterObjectSpec extends FlatSpec with Matchers {
     val Right(tweet: Tweet) = myResult.as[TwitterObject]
     tweet.id_str should be ("850006245121695744")
   }
-
-
 
 }
