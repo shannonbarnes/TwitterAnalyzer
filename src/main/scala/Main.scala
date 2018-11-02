@@ -21,16 +21,15 @@ object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] = {
 
-    (new TwitterPipeline)
+    val twitter = (new TwitterPipeline)
       .tweetStream
-      .compile
-      .drain
-      .unsafeRunAsyncAndForget()
 
-    BlazeServerBuilder[IO]
+    val server = BlazeServerBuilder[IO]
       .bindHttp(8080, "localhost")
       .withHttpApp(statServer)
       .serve
+
+    twitter.merge(server)
       .compile
       .drain
       .as(ExitCode.Success)
