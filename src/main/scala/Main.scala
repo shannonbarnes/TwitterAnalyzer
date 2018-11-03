@@ -12,24 +12,29 @@ import InMemoryDataStore.currentStats
 
 object Main extends IOApp {
 
+  val twitter = (new TwitterPipeline)
+
   val statServer = HttpRoutes.of[IO] {
     case GET -> Root / "stats" =>
       Ok(currentStats.asJson)
+
+    case GET -> Root / "stats2" =>
+      Ok(twitter.currentState.asJson)
+
   }.orNotFound
 
 
 
   def run(args: List[String]): IO[ExitCode] = {
 
-    val twitter = (new TwitterPipeline)
-      .tweetStream
+    val twitters = twitter.tweetStream
 
     val server = BlazeServerBuilder[IO]
       .bindHttp(8080, "localhost")
       .withHttpApp(statServer)
       .serve
 
-    twitter.merge(server)
+    twitters.merge(server)
       .compile
       .drain
       .as(ExitCode.Success)

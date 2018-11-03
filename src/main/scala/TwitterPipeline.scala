@@ -33,40 +33,29 @@ class TwitterPipeline(implicit t: Timer[IO]) {
 
   private val emptyState = State(0)
 
+  implicit val ex = ExecutionContext.global
 
-  //private val stateStream = Stream.eval(IO(emptyState))
-
-
-  //val queue = Queue.synchronous[IO,State]
-
-  //def queueStream = Stream.eval(queue)
   val queue = Queue.bounded[IO,State](1)
+  val queue2 = Queue.circularBuffer[IO,State](4)
 
-  //def fromQueue: IO[State] = {
-  //  queue.flatMap{ q =>
-  //    println("from queue")
-  //    val v = q.dequeue1
-  //    println("dequeed")
-  //    v
-  //  }
-  //}
+  var currentState: State = emptyState
 
-  //def stateStream: Stream[IO, State] = Stream.eval(IO(emptyState)) ++ Stream.repeatEval(fromQueue)
+  def outputSink(s: Stream[IO, State]): Stream[IO, Unit] = s map (state => currentState = state)
 
-  //def stateSink(s: Stream[IO, State]): Stream[IO, Unit] = {
-  //  Stream.eval(queue).map(q => s.to(q.enqueue))
-  //  s.map { newState => println("new state")}
-    //s.to()
-    //println("am I ever here!!!!")
-    //s.map { newState =>
-      //println("OR here!!!")
-      //println(newState)
-      //queue.map { q =>
-        //println("new State inserted")
-        //q.enqueue1(newState)
-      //}
-    //}
+  def output2: IO[State] = queue2.flatMap { q =>
+    println("I am here!!")
+    println(q)
+    q.enqueue1(emptyState)
+    val r = q.dequeue1
+    println("and here")
+    val f = r.unsafeToFuture()
+    f.onComplete{case _ => "this worked"}
+    r
+  }
 
+  def output: Stream[IO, State] = Stream.eval(queue2).flatMap { r =>
+    r.dequeue
+  }.head
 
 
   private def authenticate: IO[Request[IO]] = {
@@ -98,20 +87,16 @@ class TwitterPipeline(implicit t: Timer[IO]) {
   def tweetStream: Stream[IO, Unit] = {
      val stream = for {
        q <- Stream.eval(queue)
-       //e <- Stream.eval(q.enqueue1(emptyState))
-       ts  <- tweetStream2(q)
+       q2 <- Stream.eval(queue2)
+       ts  <- tweetStream2(q, q2)
      } yield ts
 
     stream
   }
 
-  def tweetStream2(queue: Queue[IO, State]): Stream[IO, Unit] = {
+  def tweetStream2(queue: Queue[IO, State], queue2: Queue[IO, State]): Stream[IO, Unit] = {
 
       val stateStream =  Stream.eval(IO(emptyState)) ++ Stream.repeatEval(queue.dequeue1)
-      //val stateStream =  Stream.eval(IO(emptyState)).repeat
-
-      //queue.
-      //val stateStream =  Stream.eval(queue.dequeue1)
 
       source
         .groupWithin(Int.MaxValue, collectDuration)
@@ -121,7 +106,7 @@ class TwitterPipeline(implicit t: Timer[IO]) {
            println(s)
            s.copy(count = s.count + 1)
         }
-        .to(queue.enqueue)
+        .broadcastTo(queue.enqueue, outputSink)
     }
 }
 
