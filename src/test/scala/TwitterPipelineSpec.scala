@@ -11,18 +11,13 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
   implicit val t = timer(global)
   implicit val ec = global
 
-  class TestPipeline(val in: Stream[IO, TwitterObject]) extends TwitterPipeline {
-    override def source: Stream[IO, TwitterObject] = in
+  class TestPipeline(in: List[TwitterObject]) extends TwitterPipelineImp {
+    override def source: Stream[IO, TwitterObject] = Stream(in :_*)
     def toFuture: Future[Unit] = tweetStream.compile.drain.unsafeToFuture()
-  }
-
-  def test(in: List[TwitterObject]): Future[Unit] = {
-    new TestPipeline(Stream(in :_*)).toFuture
   }
 
   def gen(obj: TwitterObject, num: Int): List[TwitterObject] =
     (for (_ <- 1 to num) yield obj).toList
-
 
   behavior of "TwitterPipeline"
 
@@ -41,10 +36,10 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 
     val tweetCount = tweets.size - 10 - 1
 
-    val f = test(tweets)
+    val testPipeline = new TestPipeline(tweets)
 
-    f.map { _ =>
-      val stats = InMemoryDataStore.currentStats
+    testPipeline.toFuture.map { _ =>
+      val stats = testPipeline.currentState.toCurrentStats
       stats.allCount should be (tweets.size)
       stats.deleteCount should be (10)
       stats.tweetCount should be (tweetCount)
@@ -55,7 +50,5 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
     }
 
   }
-
-
 
 }

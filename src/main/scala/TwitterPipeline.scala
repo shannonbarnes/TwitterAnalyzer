@@ -1,8 +1,9 @@
+import cats.effect.IO.timer
 import org.http4s._
 import org.http4s.client.blaze._
 import org.http4s.client.oauth1
 import cats.effect._
-import fs2.{Chunk, Pure, Sink, Stream}
+import fs2.{Chunk, Stream}
 import jawnfs2._
 import com.typesafe.config.ConfigFactory
 import fs2.concurrent.Queue
@@ -11,14 +12,16 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
 
-case class State(count: Int)
 
+object TwitterPipeline extends TwitterPipelineImp
 
-class TwitterPipeline(implicit t: Timer[IO]) {
+trait TwitterPipelineImp {
 
   implicit val ctx = IO.contextShift(ExecutionContext.global)
   implicit val ce = implicitly[ConcurrentEffect[IO]]
   implicit val f = io.circe.jawn.CirceSupportParser.facade
+  implicit val t = timer(global)
+
   import TwitterObject._
 
   private[this] val conf = ConfigFactory.load
@@ -31,32 +34,11 @@ class TwitterPipeline(implicit t: Timer[IO]) {
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
   private val collectDuration = 1.seconds
 
-  private val emptyState = State(0)
+  var currentState: CumulativeState = CumulativeState.empty
 
-  implicit val ex = ExecutionContext.global
+  private val queue = Queue.bounded[IO,CumulativeState](1)
 
-  val queue = Queue.bounded[IO,State](1)
-  val queue2 = Queue.circularBuffer[IO,State](4)
-
-  var currentState: State = emptyState
-
-  def outputSink(s: Stream[IO, State]): Stream[IO, Unit] = s map (state => currentState = state)
-
-  def output2: IO[State] = queue2.flatMap { q =>
-    println("I am here!!")
-    println(q)
-    q.enqueue1(emptyState)
-    val r = q.dequeue1
-    println("and here")
-    val f = r.unsafeToFuture()
-    f.onComplete{case _ => "this worked"}
-    r
-  }
-
-  def output: Stream[IO, State] = Stream.eval(queue2).flatMap { r =>
-    r.dequeue
-  }.head
-
+  private def outputSink(s: Stream[IO, CumulativeState]): Stream[IO, Unit] = s map (state => currentState = state)
 
   private def authenticate: IO[Request[IO]] = {
     oauth1.signRequest(
@@ -66,8 +48,6 @@ class TwitterPipeline(implicit t: Timer[IO]) {
       verifier = None,
       token = Some(oauth1.Token(accessToken, accessTokenSecret)))
   }
-
-
 
   protected def source: Stream[IO, TwitterObject] = {
     val source = for {
@@ -85,28 +65,25 @@ class TwitterPipeline(implicit t: Timer[IO]) {
   }
 
   def tweetStream: Stream[IO, Unit] = {
-     val stream = for {
-       q <- Stream.eval(queue)
-       q2 <- Stream.eval(queue2)
-       ts  <- tweetStream2(q, q2)
+     for {
+       q  <- Stream.eval(queue)
+       ts <- processStream(q)
      } yield ts
-
-    stream
   }
 
-  def tweetStream2(queue: Queue[IO, State], queue2: Queue[IO, State]): Stream[IO, Unit] = {
+  private def accumulate(f: Stream[IO, (Chunk[TwitterObject], CumulativeState)]): Stream[IO, CumulativeState] =
+    f map {case (c,s) => CumulativeState.append(c.toVector, s)}
 
-      val stateStream =  Stream.eval(IO(emptyState)) ++ Stream.repeatEval(queue.dequeue1)
+  private def processStream(queue: Queue[IO, CumulativeState]): Stream[IO, Unit] = {
 
-      source
-        .groupWithin(Int.MaxValue, collectDuration)
-        .zip(stateStream)
-        .map {
-         case (chunk, s) =>
-           println(s)
-           s.copy(count = s.count + 1)
-        }
-        .broadcastTo(queue.enqueue, outputSink)
+    val stateStream =  Stream.eval(IO(CumulativeState.empty)) ++ Stream.repeatEval(queue.dequeue1)
+
+    source
+      .groupWithin(Int.MaxValue, collectDuration)
+      .zip(stateStream)
+      .through(accumulate)
+      .broadcastTo(queue.enqueue, outputSink)
     }
-}
+
+ }
 
