@@ -5,7 +5,8 @@ class PriorityListSpec extends FlatSpec with Matchers {
 
 
   def setup: CountMap = {
-    val map: CountMap = Map.empty
+    val map: CountMap = emptyMap
+
     map.insert(List("A", "B", "A", "C"))
      .insert(List("C"))
      .insert(List("C"))

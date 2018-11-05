@@ -7,10 +7,14 @@ case class NameCount(name: String, count: Int)
 
 object CumulativeState {
   type CountMap = Map[String, Int]
+  val emptyMap: CountMap = Map.empty.withDefaultValue(0)
 
-  val empty = CumulativeState(0, 0, 0, 0, 0, 0, Map.empty, Map.empty, Map.empty, List.empty)
+  val empty = CumulativeState(0, 0, 0, 0, 0, 0, emptyMap, emptyMap, emptyMap, List.empty)
 
   val displayCount: Int = ConfigFactory.load.getInt("maxTopDisplay")
+
+  def conInc(b: Boolean, v: Int): Int = if (b) v + 1 else v
+  def conInc(l: List[String], v: Int): Int = conInc(l.nonEmpty, v)
 
   def append(ts: Vector[TwitterObject], state: CumulativeState): CumulativeState = {
     val newState = ts.foldLeft(state)(_ append _)
@@ -19,13 +23,13 @@ object CumulativeState {
 
   implicit class CountMapOps(map: CountMap) {
     def insert(vs: Seq[String]): CountMap = vs.foldLeft(map){case (m, v) => insertInv(m, v)}
-    private def insertInv(m: CountMap, v : String): CountMap = m + ((v, m.withDefaultValue(0)(v) + 1))
+    private def insertInv(m: CountMap, v : String): CountMap = m + ((v, m(v) + 1))
     def sortedList(num: Int = displayCount): Seq[NameCount] = map.toSeq.sortWith(_._2 > _._2).take(num).map{case (name,count) => NameCount(name, count)}
   }
 
 }
 
-final case class CumulativeState (
+final case class CumulativeState private(
     deleteCount: Int,
     parseErrors: Int,
     tweetCount: Int,
@@ -49,11 +53,11 @@ final case class CumulativeState (
       this.copy(
         tweetCount = tweetCount + 1,
         hashtags = hashtags.insert(t.hashTags),
-        containedUrlCount = if (ds.nonEmpty) containedUrlCount + 1 else containedUrlCount,
+        containedUrlCount = conInc(ds, containedUrlCount),
         domains = domains.insert(ds),
-        containedEmojiCount = if (es.nonEmpty) containedEmojiCount + 1 else containedEmojiCount,
+        containedEmojiCount = conInc(es, containedEmojiCount),
         emojis = emojis.insert(es),
-        containsPhotoCount = if (t.containPhoto(ds)) containsPhotoCount + 1 else containsPhotoCount
+        containsPhotoCount = conInc(t.containPhoto(ds), containsPhotoCount)
       )
 
     case ParseError => this.copy(parseErrors = parseErrors + 1)
