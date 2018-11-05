@@ -30,7 +30,6 @@ trait TwitterPipelineImp {
   private val apiSecretKey: String  = conf.getString("apiSecretKey")
   private val accessToken: String  = conf.getString("accessToken")
   private val accessTokenSecret: String = conf.getString("accessTokenSecret")
-
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
   private val collectDuration = 1.seconds
 
@@ -38,41 +37,36 @@ trait TwitterPipelineImp {
 
   private val queue = Queue.bounded[IO,CumulativeState](1)
 
-  private def outputSink(s: Stream[IO, CumulativeState]): Stream[IO, Unit] = s map (state => currentState = state)
-
-  private def authenticate: IO[Request[IO]] = {
+  private def authenticate: IO[Request[IO]] =
     oauth1.signRequest(
       req,
       oauth1.Consumer(apiKey, apiSecretKey),
       callback = None,
       verifier = None,
       token = Some(oauth1.Token(accessToken, accessTokenSecret)))
-  }
 
-  protected def source: Stream[IO, TwitterObject] = {
-    val source = for {
+  protected def source: Stream[IO, TwitterObject] =
+    for {
       httpClient <- BlazeClientBuilder(global).stream
       oauth      <- Stream.eval(authenticate)
       res        <- httpClient.stream(oauth)
-      tweets     <- res.body.chunks.parseJsonStream.map(_.as[TwitterObject])
+      tweets     <- res.body.chunks.parseJsonStream
+                      .map(_.as[TwitterObject]
+                      .fold(_ => ParseError, identity))
     } yield tweets
 
-    source
-      .map {
-        case Right(tweet) => tweet
-        case Left(_) => ParseError
-      }
-  }
 
-  def tweetStream: Stream[IO, Unit] = {
+  def tweetStream: Stream[IO, Unit] =
      for {
        q  <- Stream.eval(queue)
        ts <- processStream(q)
      } yield ts
-  }
+
 
   private def accumulate(f: Stream[IO, (Chunk[TwitterObject], CumulativeState)]): Stream[IO, CumulativeState] =
-    f map {case (c,s) => CumulativeState.append(c.toVector, s)}
+    f map {case (c, s) => CumulativeState.merge(c.toVector, s)}
+
+  private def outputSink(s: Stream[IO, CumulativeState]): Stream[IO, Unit] = s map (currentState = _)
 
   private def processStream(queue: Queue[IO, CumulativeState]): Stream[IO, Unit] = {
 

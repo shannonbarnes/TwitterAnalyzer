@@ -27,26 +27,34 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
     val emojiSmileTweet = baseTweet.copy(text = "Smile \uD83D\uDE00")
     val emojiSmileAndWinkTweet = baseTweet.copy(text = "Smile \uD83D\uDE00 and wink \uD83D\uDE09")
 
+    val parserErrorN = 1
+    val baseN = 100
+    val deleteN = 7
+    val smileOnlyN = 9
+    val smileWinkN = 10
+    val smailTotalN = smileOnlyN + smileWinkN
+
+
     val tweets: List[TwitterObject] =
       ParseError ::
-      gen(baseTweet, 100) :::
-      gen(DeleteTweet, 10) :::
-      gen(emojiSmileTweet, 10) :::
-      gen(emojiSmileAndWinkTweet, 10)
+      gen(baseTweet, baseN) :::
+      gen(DeleteTweet, deleteN) :::
+      gen(emojiSmileTweet, smileOnlyN) :::
+      gen(emojiSmileAndWinkTweet, smileWinkN)
 
-    val tweetCount = tweets.size - 10 - 1
+    val tweetCount = tweets.size - deleteN - parserErrorN
 
     val testPipeline = new TestPipeline(tweets)
 
     testPipeline.toFuture.map { _ =>
       val stats = testPipeline.currentState.toCurrentStats
       stats.allCount should be (tweets.size)
-      stats.deleteCount should be (10)
+      stats.deleteCount should be (deleteN)
       stats.tweetCount should be (tweetCount)
-      stats.parseErrors should be (1)
-      stats.percentWithEmojis should be (Fraction(20, tweetCount).percentage)
-      stats.topEmojis.head should be (NameCount("\uD83D\uDE00", 20))
-      stats.topEmojis(1) should be (NameCount("\uD83D\uDE09", 10))
+      stats.parseErrors should be (parserErrorN)
+      stats.percentWithEmojis should be (Fraction(smailTotalN, tweetCount).percentage)
+      stats.topEmojis.head should be (NameCount("\uD83D\uDE00", smailTotalN))
+      stats.topEmojis(1) should be (NameCount("\uD83D\uDE09", smileWinkN))
     }
 
   }

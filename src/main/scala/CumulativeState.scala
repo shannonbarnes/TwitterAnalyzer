@@ -16,7 +16,7 @@ object CumulativeState {
   def conInc(b: Boolean, v: Int): Int = if (b) v + 1 else v
   def conInc(l: List[String], v: Int): Int = conInc(l.nonEmpty, v)
 
-  def append(ts: Vector[TwitterObject], state: CumulativeState): CumulativeState = {
+  def merge(ts: Vector[TwitterObject], state: CumulativeState): CumulativeState = {
     val newState = ts.foldLeft(state)(_ append _)
     newState.copy(countPerSeg = ts.size :: newState.countPerSeg)
   }
