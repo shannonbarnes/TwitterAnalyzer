@@ -4,7 +4,6 @@ import fs2.Stream
 import org.scalatest._
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
-import FractionSyntax._
 
 class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 

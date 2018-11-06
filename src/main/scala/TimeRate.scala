@@ -1,6 +1,4 @@
 import scala.annotation.tailrec
-import scala.collection.mutable
-import FractionSyntax._
 
 object TimeRate {
 
@@ -17,7 +15,7 @@ object TimeRate {
   def ratePerHour(list: CountPerSecond): Fraction = calculateRate(hour, list)
 
   def calculateRates(list: CountPerSecond): (Double, Double, Double) =
-    (ratePerSecond(list).roundedDouble, ratePerMinute(list).roundedDouble, ratePerHour(list).roundedDouble)
+    (ratePerSecond(list).roundedDouble(), ratePerMinute(list).roundedDouble(), ratePerHour(list).roundedDouble())
 
   private[this] def calculateRate(period: SecondsInPeriod, list: CountPerSecond): Fraction = {
 

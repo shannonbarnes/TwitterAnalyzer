@@ -1,5 +1,4 @@
 import CumulativeState._
-import FractionSyntax._
 import com.typesafe.config.ConfigFactory
 import TweetSyntax._
 

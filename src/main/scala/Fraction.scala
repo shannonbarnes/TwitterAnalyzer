@@ -1,20 +1,14 @@
 import scala.language.implicitConversions
 
-object FractionSyntax {
-
-  def round(p: Fraction, mult: Int = 1): Double = {
-    if (p.den <= 0) 0 else
-    BigDecimal(p.num.toDouble/p.den * mult).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
-  }
-
-  implicit class FractionPimp(f: Fraction) {
-    def percentage: Double = round(f, 100)
-    def roundedDouble: Double = round(f)
-  }
-
-}
 
 case class Fraction(num: Int, den: Int) {
+  if (den <= 0) throw new IllegalArgumentException("Fraction must have dem > 0")
   def addToNum(v: Int): Fraction = this.copy(num = num + v)
   def addToNumIncDem(v: Int): Fraction = this.copy(num = num + v, den = den + 1)
+
+  def roundedDouble(places: Int = 2, mult: Int = 1): Double =
+    BigDecimal(num.toDouble/den * mult).setScale(places, BigDecimal.RoundingMode.HALF_UP).toDouble
+
+  def percentage: Double = roundedDouble(mult = 100)
+
 }
