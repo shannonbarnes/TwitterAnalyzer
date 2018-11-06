@@ -14,8 +14,8 @@ class FractionSpec extends FlatSpec with Matchers {
     test(Fraction(2, 3).roundedDouble(), .67)
 
     test(Fraction(100, 3).roundedDouble(), 33.33)
-    
-    a[IllegalArgumentException] should be thrownBy Fraction(2, 0)
+
+    test(Fraction(2, 0).roundedDouble(), 0)
 
   }
 }

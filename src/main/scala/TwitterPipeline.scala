@@ -17,10 +17,10 @@ object TwitterPipeline extends TwitterPipelineImp
 
 trait TwitterPipelineImp {
 
-  implicit val ctx = IO.contextShift(ExecutionContext.global)
+  implicit val ct = IO.contextShift(ExecutionContext.global)
   implicit val ce = implicitly[ConcurrentEffect[IO]]
-  implicit val f = io.circe.jawn.CirceSupportParser.facade
-  implicit val t = timer(global)
+  implicit val fc = io.circe.jawn.CirceSupportParser.facade
+  implicit val tm = timer(global)
 
   import TwitterObject._
 

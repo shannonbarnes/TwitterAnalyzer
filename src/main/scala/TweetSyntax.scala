@@ -1,5 +1,4 @@
 import java.net.URL
-
 import com.vdurmont.emoji.EmojiParser
 import scala.collection.JavaConverters._
 import scala.util.Try
