@@ -2,7 +2,7 @@ import CumulativeState._
 import com.typesafe.config.ConfigFactory
 import TweetSyntax._
 
-case class NameCount(name: String, count: Int)
+
 
 object CumulativeState {
   type CountMap = Map[String, Int]
@@ -86,18 +86,4 @@ final case class CumulativeState private(
 }
 
 
-final case class CurrentStats(
-    allCount: Int,
-    tweetCount: Int,
-    deleteCount: Int,
-    parseErrors: Int,
-    ratePerSecond: Double,
-    ratePerMinute: Double,
-    ratePerHour: Double,
-    percentWithEmojis: Double,
-    percentWithUrls: Double,
-    percentWithPhotos: Double,
-    topHashTags: Seq[NameCount],
-    topEmojis: Seq[NameCount],
-    topDomains: Seq[NameCount]
-)
+

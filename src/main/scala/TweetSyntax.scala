@@ -22,9 +22,5 @@ object TweetSyntax {
         domains.exists(_.contains("pic.twitter.com")) ||
           domains.exists(_.contains("instagram"))
 
-
   }
-
-
-
 }

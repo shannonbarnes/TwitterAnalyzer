@@ -23,7 +23,3 @@ final case class Hashtag(indices: List[Int], text: String)
 final case class Url(expanded_url: String, unwound: Option[Unwound])
 final case class Unwound(url: String)
 final case class Media(`type`: String)
-
-
-
-
