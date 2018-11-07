@@ -10,6 +10,7 @@ final case class CurrentStats(
     percentWithEmojis: Double,
     percentWithUrls: Double,
     percentWithPhotos: Double,
+    percentDeletes: Double,
     topHashTags: Seq[NameCount],
     topEmojis: Seq[NameCount],
     topDomains: Seq[NameCount]

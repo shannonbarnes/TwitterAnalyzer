@@ -10,25 +10,27 @@ object TimeRate {
   private val hour: SecondsInPeriod = 3600
   private val initFraction = Fraction(0, 1)
 
-  def ratePerSecond(list: CountPerSecond): Fraction = calculateRate(second, list)
-  def ratePerMinute(list: CountPerSecond): Fraction = calculateRate(minute, list)
-  def ratePerHour(list: CountPerSecond): Fraction = calculateRate(hour, list)
+  def ratePerSecond(list: CountPerSecond): Fraction = calculateRate(second, list, 0)
+  def ratePerMinute(list: CountPerSecond, avgSec: Double): Fraction = calculateRate(minute, list, avgSec)
+  def ratePerHour(list: CountPerSecond, avgSec: Double): Fraction = calculateRate(hour, list, avgSec)
 
-  def calculateRates(list: CountPerSecond): (Double, Double, Double) =
-    (ratePerSecond(list).roundedDouble(), ratePerMinute(list).roundedDouble(), ratePerHour(list).roundedDouble())
+  def calculateRates(list: CountPerSecond): (Double, Double, Double) = {
+    val avgSec = ratePerSecond(list).roundedDouble()
+    (avgSec, ratePerMinute(list, avgSec).roundedDouble(), ratePerHour(list, avgSec).roundedDouble())
+  }
 
-  private[this] def calculateRate(period: SecondsInPeriod, list: CountPerSecond): Fraction = {
+  private[this] def calculateRate(period: SecondsInPeriod, list: CountPerSecond, avgSec: Double): Fraction = {
 
     @tailrec
-    def doCalc(list: CountPerSecond, periodLeft: Int, periodSize: Int, f: Fraction, lastValue: Int): Fraction =
+    def doCalc(list: CountPerSecond, periodLeft: Int, periodSize: Int, f: Fraction, avgSec: Double): Fraction =
       (list, periodLeft) match {
         case (Nil, 0)     => f
-        case (Nil, p)     => f.addToNum(p * lastValue)
-        case (h :: t, 0)  => doCalc(t, periodSize - 1, periodSize, f.addToNumIncDem(h), h)
-        case (h :: t, p)  => doCalc(t, p - 1, periodSize, f.addToNum(h), h)
+        case (Nil, p)     => f.addToNum(p * avgSec)
+        case (h :: t, 0)  => doCalc(t, periodSize - 1, periodSize, f.addToNumIncDem(h), avgSec)
+        case (h :: t, p)  => doCalc(t, p - 1, periodSize, f.addToNum(h), avgSec)
       }
 
-    doCalc(list, period, period, initFraction, 0)
+    doCalc(list, period, period, initFraction, avgSec)
 
   }
 

@@ -43,13 +43,13 @@ final case class CumulativeState private(
 
   def append(t: TwitterObject): CumulativeState = t match {
 
-    case DeleteTweet => this.copy(deleteCount = deleteCount + 1)
+    case DeleteTweet => copy(deleteCount = deleteCount + 1)
     case t: Tweet =>
 
       val ds = t.domains
       val es = t.emojis
 
-      this.copy(
+      copy(
         tweetCount = tweetCount + 1,
         hashtags = hashtags.insert(t.hashTags),
         containedUrlCount = conInc(ds, containedUrlCount),
@@ -59,15 +59,15 @@ final case class CumulativeState private(
         containsPhotoCount = conInc(t.containPhoto(ds), containsPhotoCount)
       )
 
-    case ParseError => this.copy(parseErrors = parseErrors + 1)
+    case ParseError => copy(parseErrors = parseErrors + 1)
 
   }
 
   def toCurrentStats: CurrentStats = {
     val (ratePerSec, ratePerMin, ratePerHour) = TimeRate.calculateRates(countPerSeg)
-
+    val all = deleteCount + tweetCount + parseErrors
     CurrentStats(
-      allCount = deleteCount + tweetCount + parseErrors,
+      allCount = all,
       tweetCount = tweetCount,
       deleteCount = deleteCount,
       parseErrors = parseErrors,
@@ -77,6 +77,7 @@ final case class CumulativeState private(
       percentWithEmojis = Fraction(containedEmojiCount, tweetCount).percentage,
       percentWithUrls = Fraction(containedUrlCount, tweetCount).percentage,
       percentWithPhotos = Fraction(containsPhotoCount, tweetCount).percentage,
+      percentDeletes = Fraction(deleteCount, all).percentage,
       topHashTags = hashtags.sortedList(),
       topEmojis = emojis.sortedList(),
       topDomains = domains.sortedList()
