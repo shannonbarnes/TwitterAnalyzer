@@ -49,8 +49,7 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 
     testPipeline.toFuture.map { _ =>
       val stats = testPipeline.currentState.toCurrentStats
-      println(stats.ratePerSecond)
-      println(stats.ratePerMinute)
+      
       stats.allCount should be (tweets.size)
       stats.deleteCount should be (deleteN)
       stats.tweetCount should be (tweetCount)
@@ -58,7 +57,7 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
       stats.percentWithEmojis should be (Fraction(smailTotalN, tweetCount).percentage)
       stats.topEmojis.head should be (NameCount("\uD83D\uDE00", smailTotalN))
       stats.topEmojis(1) should be (NameCount("\uD83D\uDE09", smileWinkN))
-      
+
     }
 
   }
