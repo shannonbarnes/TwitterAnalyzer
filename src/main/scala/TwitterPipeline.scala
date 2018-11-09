@@ -23,6 +23,8 @@ trait TwitterPipelineImp {
   implicit val fc = io.circe.jawn.CirceSupportParser.facade
   implicit val tm = timer(global)
 
+  type IOStream[A] = Stream[IO, A]
+
   import TwitterObject._
 
   private[this] val conf = ConfigFactory.load
@@ -48,7 +50,7 @@ trait TwitterPipelineImp {
       verifier = None,
       token = Some(oauth1.Token(accessToken, accessTokenSecret)))
 
-  protected def source: Stream[IO, Json] =
+  protected def source: IOStream[Json] =
     for {
       httpClient <- BlazeClientBuilder(global).stream
       oauth      <- Stream.eval(authenticate)
@@ -57,20 +59,20 @@ trait TwitterPipelineImp {
     } yield tweets
 
 
-  def tweetStream: Stream[IO, Unit] =
+  def tweetStream: IOStream[Unit] =
      for {
        q  <- Stream.eval(queue)
        ts <- processStream(q)
      } yield ts
 
 
-  private def accumulateSink(s: Stream[IO, Chunk[Json]]): Stream[IO, Unit] = s map {chunks =>
+  private def accumulateSink(s: IOStream[Chunk[Json]]): IOStream[Unit] = s map {chunks =>
     currentState = CumulativeState.merge(
       chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).toVector,
       currentState)
   }
 
-  private def processStream(queue: Queue[IO, Json]): Stream[IO, Unit] = {
+  private def processStream(queue: Queue[IO, Json]): IOStream[Unit] = {
 
     val producer = source.to(queue.enqueue)
     val consumer = queue
