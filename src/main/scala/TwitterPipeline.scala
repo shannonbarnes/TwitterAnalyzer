@@ -7,6 +7,7 @@ import fs2.{Chunk, Stream}
 import jawnfs2._
 import com.typesafe.config.ConfigFactory
 import fs2.concurrent.Queue
+import io.circe.Json
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -33,9 +34,11 @@ trait TwitterPipelineImp {
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
   private val collectDuration = 1.seconds
 
-  var currentState: CumulativeState = CumulativeState.empty
+  private[this] var currentState: CumulativeState = CumulativeState.empty
 
-  private val queue = Queue.bounded[IO,CumulativeState](1)
+  def currentStats: CurrentStats = currentState.toCurrentStats
+
+  private val queue = Queue.unbounded[IO, Json]
 
   private def authenticate: IO[Request[IO]] =
     oauth1.signRequest(
@@ -45,14 +48,12 @@ trait TwitterPipelineImp {
       verifier = None,
       token = Some(oauth1.Token(accessToken, accessTokenSecret)))
 
-  protected def source: Stream[IO, TwitterObject] =
+  protected def source: Stream[IO, Json] =
     for {
       httpClient <- BlazeClientBuilder(global).stream
       oauth      <- Stream.eval(authenticate)
       res        <- httpClient.stream(oauth)
       tweets     <- res.body.chunks.parseJsonStream
-                      .map(_.as[TwitterObject]
-                      .fold(_ => ParseError, identity))
     } yield tweets
 
 
@@ -63,20 +64,22 @@ trait TwitterPipelineImp {
      } yield ts
 
 
-  private def accumulate(f: Stream[IO, (Chunk[TwitterObject], CumulativeState)]): Stream[IO, CumulativeState] =
-    f map {case (c, s) => CumulativeState.merge(c.toVector, s)}
+  private def accumulateSink(s: Stream[IO, Chunk[Json]]): Stream[IO, Unit] = s map {chunks =>
+    currentState = CumulativeState.merge(
+      chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).toVector,
+      currentState)
+  }
 
-  private def outputSink(s: Stream[IO, CumulativeState]): Stream[IO, Unit] = s map (currentState = _)
+  private def processStream(queue: Queue[IO, Json]): Stream[IO, Unit] = {
 
-  private def processStream(queue: Queue[IO, CumulativeState]): Stream[IO, Unit] = {
-
-    val stateStream =  Stream.eval(IO(CumulativeState.empty)) ++ Stream.repeatEval(queue.dequeue1)
-
-    source
+    val producer = source.to(queue.enqueue)
+    val consumer = queue
+      .dequeue
       .groupWithin(Int.MaxValue, collectDuration)
-      .zip(stateStream)
-      .through(accumulate)
-      .broadcastTo(queue.enqueue, outputSink)
-    }
+      .to(accumulateSink)
+
+    consumer.concurrently(producer)
+
+  }
 
  }
