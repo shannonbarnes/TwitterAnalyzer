@@ -12,7 +12,7 @@ object Main extends IOApp {
 
   val statServer = HttpRoutes.of[IO] {
     case GET -> Root / "stats" =>
-      Ok(TwitterPipeline.currentState.toCurrentStats.asJson)
+      Ok(TwitterPipeline.currentStats.asJson)
 
   }.orNotFound
 
