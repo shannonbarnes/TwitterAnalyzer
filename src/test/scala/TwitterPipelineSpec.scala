@@ -49,7 +49,7 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 
     testPipeline.toFuture.map { _ =>
       val stats = testPipeline.currentState.toCurrentStats
-      
+
       stats.allCount should be (tweets.size)
       stats.deleteCount should be (deleteN)
       stats.tweetCount should be (tweetCount)
