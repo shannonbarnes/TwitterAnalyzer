@@ -1,28 +1,4 @@
-import TimeRate._
-
 import scala.annotation.tailrec
-
-
-object TimeRate2 {
-  private val second: SecondsInPeriod = 1
-  private val minute: SecondsInPeriod = 60
-  private val hour: SecondsInPeriod = 3600
-
-
-
-  def ratePerSecond(seconds: Int, total: Int): Double = Fraction(total, seconds).roundedDouble()
-  def ratePerMinute(seconds: Int, total: Int, avgSec: Double): Double = {
-
-  }
-
-  def calculateRates(seconds: Int, total: Int): (Double, Double, Double) = {
-    val avgSec = ratePerSecond(list).roundedDouble()
-    (avgSec, ratePerMinute(list, avgSec).roundedDouble(), ratePerHour(list, avgSec).roundedDouble())
-  }
-
-}
-
-
 
 object TimeRate {
 

@@ -5,7 +5,6 @@ final case class CurrentStats(
     deleteCount: Int,
     parseErrors: Int,
     ratePerSecond: Double,
-    ratePerSecond2: Double,
     ratePerMinute: Double,
     ratePerHour: Double,
     percentWithEmojis: Double,

@@ -8,7 +8,7 @@ object CumulativeState {
   type CountMap = Map[String, Int]
   val emptyMap: CountMap = Map.empty.withDefaultValue(0)
 
-  val empty = CumulativeState(0, 0, 0, 0, 0, 0, 0, emptyMap, emptyMap, emptyMap, List.empty)
+  val empty = CumulativeState(0, 0, 0, 0, 0, 0, emptyMap, emptyMap, emptyMap, List.empty)
 
   val displayCount: Int = ConfigFactory.load.getInt("maxTopDisplay")
 
@@ -17,7 +17,7 @@ object CumulativeState {
 
   def merge(ts: Vector[TwitterObject], state: CumulativeState): CumulativeState = {
     val newState = ts.foldLeft(state)(_ append _)
-    newState.copy(seconds = state.seconds + 1, countPerSeg = ts.size :: newState.countPerSeg)
+    newState.copy(countPerSeg = ts.size :: newState.countPerSeg)
   }
 
   implicit class CountMapOps(map: CountMap) {
@@ -29,7 +29,6 @@ object CumulativeState {
 }
 
 final case class CumulativeState private(
-    seconds: Int,
     deleteCount: Int,
     parseErrors: Int,
     tweetCount: Int,
@@ -73,7 +72,6 @@ final case class CumulativeState private(
       deleteCount = deleteCount,
       parseErrors = parseErrors,
       ratePerSecond = ratePerSec,
-      ratePerSecond2 = Fraction(all, seconds).roundedDouble(),
       ratePerMinute = ratePerMin,
       ratePerHour = ratePerHour,
       percentWithEmojis = Fraction(containedEmojiCount, tweetCount).percentage,
