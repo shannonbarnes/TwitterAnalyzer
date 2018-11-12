@@ -10,7 +10,7 @@ object State {
   type CountMap = Map[String, Int]
   type ItemList = List[String]
 
-  type ProcessState = State[ItemList]
+  type ProcessedTweets = State[ItemList]
   type CumulativeState = State[CountMap]
 
   implicit val listHelper: MergeHelper[ItemList, ItemList] = (a, b) => a ::: b

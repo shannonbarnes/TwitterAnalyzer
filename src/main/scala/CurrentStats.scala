@@ -22,10 +22,7 @@ object CurrentStats {
       topDomains = s.domains.sortedList()
     )
   }
-
 }
-
-
 
 final case class CurrentStats(
     allCount: Int,

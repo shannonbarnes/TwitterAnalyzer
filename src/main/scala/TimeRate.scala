@@ -5,7 +5,6 @@ object TimeRate {
   type CountPerSecond = List[Int]
   type SecondsInPeriod = Int
 
-
   private val second: SecondsInPeriod = 1
   private val minute: SecondsInPeriod = 60
   private val hour: SecondsInPeriod = 3600

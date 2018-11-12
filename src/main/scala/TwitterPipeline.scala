@@ -4,7 +4,7 @@ import org.http4s._
 import org.http4s.client.blaze._
 import org.http4s.client.oauth1
 import cats.effect._
-import fs2.{Chunk, Pipe, Stream}
+import fs2.{Pipe, Stream}
 import jawnfs2._
 import com.typesafe.config.ConfigFactory
 import fs2.concurrent.Queue
@@ -35,7 +35,6 @@ trait TwitterPipelineImp {
   private val accessToken: String  = conf.getString("accessToken")
   private val accessTokenSecret: String = conf.getString("accessTokenSecret")
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
-  private val collectDuration = 1.seconds
 
   private[this] var currentState = State.emptyCumulativeState
 
@@ -67,7 +66,7 @@ trait TwitterPipelineImp {
      } yield ts
 
 
-  private def accumulateSink(s: IOStream[Either[ProcessState, FiniteDuration]]): IOStream[Unit] = s map {
+  private def accumulateSink(s: IOStream[Either[ProcessedTweets, FiniteDuration]]): IOStream[Unit] = s map {
     case Left(state) => currentState = currentState.combine(state)
     case Right(_) => TimeRate.insertSecond(currentState.all)
   }
@@ -77,30 +76,28 @@ trait TwitterPipelineImp {
     in.evalMap(i => IO { println(i) ; i} )
   }
 
-  def process(take: Int): Pipe[IO, Json, IOStream[ProcessState]] = in => {
+  def process(take: Int): Pipe[IO, Json, IOStream[ProcessedTweets]] = in => {
     in.chunkN(take).map { chunks =>
-      Stream.eval{ IO {
-        chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).foldLeft(State.emptyProcess)(_ combine _)
-      }
-      }
+      Stream.eval(
+        IO(
+          chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).foldLeft(State.emptyProcess)(_ combine _)
+        )
+      )
     }
   }
 
+
   private def processStream(queue: Queue[IO, Json]): IOStream[Unit] = {
 
-    val timer = Stream.awakeEvery[IO](collectDuration)
+    val timer = Stream.awakeEvery[IO](1.seconds)
 
     val producer = source
-      //.through(log(""))
       .to(queue.enqueue)
+
     val consumer = queue
       .dequeue
       .through(process(10))
       .parJoin(3)
-      //.groupWithin(Int.MaxValue, collectDuration)
-      //.through(process)
-      //.through(log("B------------------------------------------------------------------"))
-      //.through(log("value"))
       .either(timer)
       .to(accumulateSink)
 

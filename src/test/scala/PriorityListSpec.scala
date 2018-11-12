@@ -1,4 +1,4 @@
-import CumulativeState._
+import State._
 import org.scalatest._
 
 class PriorityListSpec extends FlatSpec with Matchers {
@@ -6,13 +6,7 @@ class PriorityListSpec extends FlatSpec with Matchers {
 
   def setup: CountMap = {
     val map: CountMap = emptyMap
-
-    map.insert(List("A", "B", "A", "C"))
-     .insert(List("C"))
-     .insert(List("C"))
-     .insert(List("C"))
-     .insert(List("D", "D", "D"))
-     .insert(List("D", "D", "A"))
+    mapHelper.merge(List("A", "B", "A", "C", "C", "C", "C", "D", "D", "D", "D", "D", "A"), map)
    }
 
   "PriorityList" should "return a list of ordered items" in {

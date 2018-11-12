@@ -1,12 +1,12 @@
 import java.net.URL
 
-import State.ProcessState
+import State.ProcessedTweets
 import com.vdurmont.emoji.EmojiParser
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-trait TweetExtration extends ProcessState { self: Tweet =>
+trait TweetProcessor extends ProcessedTweets { self: Tweet =>
 
   val deleteCount: Int = 0
   val parseErrors: Int = 0
@@ -34,24 +34,3 @@ trait TweetExtration extends ProcessState { self: Tweet =>
       domains.exists(_.contains("instagram"))
 }
 
-object TweetSyntax {
-
-  implicit class tweetExtractor(t: Tweet) {
-    def hashTags: List[String] = t.entities.hashtags.map(_.text)
-
-    def emojis: List[String] = EmojiParser.extractEmojis(t.text).asScala.toList
-
-    def domains: List[String] =
-      for {
-        urlObj <- t.entities.urls
-        url    = urlObj.unwound.fold(urlObj.expanded_url)(_.url)
-        u      <- Try {new URL(url)}.toOption
-      } yield u.getHost
-
-    def containPhoto(domains: List[String]): Boolean =
-      t.entities.media.exists(_.exists(_.`type` == "photo")) ||
-        domains.exists(_.contains("pic.twitter.com")) ||
-          domains.exists(_.contains("instagram"))
-
-  }
-}

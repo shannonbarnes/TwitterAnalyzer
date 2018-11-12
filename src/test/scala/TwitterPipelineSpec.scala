@@ -35,7 +35,7 @@ class TwitterPipelineSpec extends FlatSpec with Matchers {
     val emojiSmileAndWinkTweet = baseTweet.copy(text = "Smile \uD83D\uDE00 and wink \uD83D\uDE09")
 
     val parserErrorN = 1
-    val baseN = 1000
+    val baseN = 999
     val deleteN = 70
     val smileOnlyN = 90
     val smileWinkN = 100
@@ -56,6 +56,7 @@ class TwitterPipelineSpec extends FlatSpec with Matchers {
     testPipeline.tweetStream.compile.drain.unsafeRunAsyncAndForget()
     Thread.sleep(1000 * 10)
     val stats = testPipeline.currentStats
+    println(stats.ratePerSecond)
     stats.allCount should be (tweets.size)
     stats.deleteCount should be (deleteN)
     stats.tweetCount should be (tweetCount)
@@ -63,7 +64,6 @@ class TwitterPipelineSpec extends FlatSpec with Matchers {
     stats.percentWithEmojis should be (Fraction(smailTotalN, tweetCount).percentage)
     stats.topEmojis.head should be (NameCount("\uD83D\uDE00", smailTotalN))
     stats.topEmojis(1) should be (NameCount("\uD83D\uDE09", smileWinkN))
-
   }
 
 }
