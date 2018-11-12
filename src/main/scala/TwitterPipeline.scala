@@ -1,9 +1,10 @@
+import State._
 import cats.effect.IO.timer
 import org.http4s._
 import org.http4s.client.blaze._
 import org.http4s.client.oauth1
 import cats.effect._
-import fs2.{Chunk, Stream}
+import fs2.{Chunk, Pipe, Stream}
 import jawnfs2._
 import com.typesafe.config.ConfigFactory
 import fs2.concurrent.Queue
@@ -72,13 +73,40 @@ trait TwitterPipelineImp {
       currentState)
   }
 
+  private def chunkSize(s: IOStream[Json]): IOStream[Json] = {
+    s.chunks map {
+      c => println(c.size)
+    }
+    s
+  }
+
+  def log[A](prefix : String) : Pipe[IO,A,A] = { in =>
+    in.evalMap(i => IO { println(i) ; i} )
+  }
+
+  def process(take: Int): Pipe[IO, Json, IOStream[ProcessState]] = in => {
+    in.chunkN(take).map { chunks =>
+      Stream.eval{ IO {
+        chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).foldLeft(State.emptyProcess)(_ combine _)
+       }
+      }
+    }
+  }
+
   private def processStream(queue: Queue[IO, Json]): IOStream[Unit] = {
 
-    val producer = source.to(queue.enqueue)
+    val producer = source
+      //.through(log(""))
+      .to(queue.enqueue)
     val consumer = queue
       .dequeue
-      .groupWithin(Int.MaxValue, collectDuration)
-      .to(accumulateSink)
+      .through(process(10))
+      .parJoin(3)
+      //.groupWithin(Int.MaxValue, collectDuration)
+      //.through(process)
+      //.through(log("B------------------------------------------------------------------"))
+      .through(log("value"))
+      .to(_.map(_ => ()))
 
     consumer.concurrently(producer)
 
