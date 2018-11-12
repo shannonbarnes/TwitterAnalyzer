@@ -9,11 +9,9 @@ import jawnfs2._
 import com.typesafe.config.ConfigFactory
 import fs2.concurrent.Queue
 import io.circe.Json
-
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
-
 
 object TwitterPipeline extends TwitterPipelineImp
 
@@ -58,7 +56,6 @@ trait TwitterPipelineImp {
       tweets     <- res.body.chunks.parseJsonStream
     } yield tweets
 
-
   def tweetStream: IOStream[Unit] =
      for {
        q  <- Stream.eval(queue)
@@ -71,11 +68,6 @@ trait TwitterPipelineImp {
     case Right(_) => TimeRate.insertSecond(currentState.all)
   }
 
-
-  def log[A](prefix : String) : Pipe[IO,A,A] = { in =>
-    in.evalMap(i => IO { println(i) ; i} )
-  }
-
   def process(take: Int): Pipe[IO, Json, IOStream[ProcessedTweets]] = in => {
     in.chunkN(take).map { chunks =>
       Stream.eval(
@@ -85,7 +77,6 @@ trait TwitterPipelineImp {
       )
     }
   }
-
 
   private def processStream(queue: Queue[IO, Json]): IOStream[Unit] = {
 
@@ -102,7 +93,5 @@ trait TwitterPipelineImp {
       .to(accumulateSink)
 
     consumer.concurrently(producer)
-
   }
-
  }
