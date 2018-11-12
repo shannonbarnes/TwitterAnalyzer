@@ -37,9 +37,9 @@ trait TwitterPipelineImp {
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
   private val collectDuration = 1.seconds
 
-  private[this] var currentState: CumulativeState = CumulativeState.empty
+  private[this] var currentState = State.emptyCumulativeState
 
-  def currentStats: CurrentStats = currentState.toCurrentStats
+  def currentStats: CurrentStats = CurrentStats.fromState(currentState)
 
   private val queue = Queue.unbounded[IO, Json]
 
@@ -67,18 +67,11 @@ trait TwitterPipelineImp {
      } yield ts
 
 
-  private def accumulateSink(s: IOStream[Chunk[Json]]): IOStream[Unit] = s map {chunks =>
-    currentState = CumulativeState.merge(
-      chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).toVector,
-      currentState)
+  private def accumulateSink(s: IOStream[Either[ProcessState, FiniteDuration]]): IOStream[Unit] = s map {
+    case Left(state) => currentState = currentState.combine(state)
+    case Right(_) => TimeRate.insertSecond(currentState.all)
   }
 
-  private def chunkSize(s: IOStream[Json]): IOStream[Json] = {
-    s.chunks map {
-      c => println(c.size)
-    }
-    s
-  }
 
   def log[A](prefix : String) : Pipe[IO,A,A] = { in =>
     in.evalMap(i => IO { println(i) ; i} )
@@ -88,12 +81,14 @@ trait TwitterPipelineImp {
     in.chunkN(take).map { chunks =>
       Stream.eval{ IO {
         chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).foldLeft(State.emptyProcess)(_ combine _)
-       }
+      }
       }
     }
   }
 
   private def processStream(queue: Queue[IO, Json]): IOStream[Unit] = {
+
+    val timer = Stream.awakeEvery[IO](collectDuration)
 
     val producer = source
       //.through(log(""))
@@ -105,8 +100,9 @@ trait TwitterPipelineImp {
       //.groupWithin(Int.MaxValue, collectDuration)
       //.through(process)
       //.through(log("B------------------------------------------------------------------"))
-      .through(log("value"))
-      .to(_.map(_ => ()))
+      //.through(log("value"))
+      .either(timer)
+      .to(accumulateSink)
 
     consumer.concurrently(producer)
 

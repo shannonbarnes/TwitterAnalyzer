@@ -1,3 +1,4 @@
+import com.typesafe.config.ConfigFactory
 
 trait MergeHelper[A, B] {
   def merge(a: A, b: B): B
@@ -10,7 +11,7 @@ object State {
   type ItemList = List[String]
 
   type ProcessState = State[ItemList]
-  type CulmState = State[CountMap]
+  type CumulativeState = State[CountMap]
 
   implicit val listHelper: MergeHelper[ItemList, ItemList] = (a, b) => a ::: b
 
@@ -19,28 +20,37 @@ object State {
     private def insertInv(m: CountMap, v : String): CountMap = m + ((v, m(v) + 1))
   }
 
+  val displayCount: Int = ConfigFactory.load.getInt("maxTopDisplay")
+
+  implicit class CountMapOps(map: CountMap) {
+    def sortedList(num: Int = displayCount): Seq[NameCount] =
+      map.toSeq.sortWith(_._2 > _._2).take(num).map{case (name,count) => NameCount(name, count)}
+  }
+
   val emptyMap: CountMap = Map.empty.withDefaultValue(0)
-  val emptyProcess: ConcreteState[ItemList] = ConcreteState(hashtags = List.empty, domains = List.empty, emojis = List.empty)
-  val emptyCulmState: ConcreteState[CountMap] = ConcreteState(hashtags = emptyMap, domains = emptyMap, emojis = emptyMap)
-
-
+  val emptyProcess: ConcreteState[ItemList] = new ConcreteState(List.empty)
+  val emptyCumulativeState: ConcreteState[CountMap] = new ConcreteState(emptyMap)
 
 }
 
-case class ConcreteState[A](
-  deleteCount: Int = 0,
-  parseErrors: Int = 0,
-  tweetCount: Int = 0,
-  containedEmojiCount: Int = 0,
-  containedUrlCount: Int = 0,
-  containsPhotoCount: Int = 0,
-  hashtags: A,
-  domains: A,
-  emojis: A,
+class ConcreteState[A](
+  val deleteCount: Int,
+  val parseErrors: Int,
+  val tweetCount: Int,
+  val containedEmojiCount: Int,
+  val containedUrlCount: Int,
+  val containsPhotoCount: Int,
+  val hashtags: A,
+  val domains: A,
+  val emojis: A,
 ) extends State[A] {
 
+  def this(empty: A) {
+    this(0, 0, 0, 0, 0, 0, empty, empty, empty)
+  }
+
   def combine[B](a: State[B])(implicit ch: MergeHelper[B, A]): ConcreteState[A] = {
-    copy(
+    new ConcreteState (
       deleteCount = deleteCount + a.deleteCount,
       parseErrors = parseErrors + a.parseErrors,
       tweetCount = tweetCount + a.tweetCount,
@@ -52,7 +62,6 @@ case class ConcreteState[A](
       emojis = ch.merge(a.emojis, emojis)
     )
   }
-
 }
 
 trait State[A] {
@@ -65,4 +74,5 @@ trait State[A] {
   def hashtags: A
   def domains: A
   def emojis: A
+  def all: Int = deleteCount + parseErrors + tweetCount
 }

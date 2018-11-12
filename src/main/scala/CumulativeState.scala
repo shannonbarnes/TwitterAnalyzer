@@ -1,3 +1,4 @@
+/*
 import CumulativeState._
 import com.typesafe.config.ConfigFactory
 import TweetSyntax._
@@ -86,5 +87,5 @@ final case class CumulativeState private(
 
 }
 
-
+*/
 

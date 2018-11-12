@@ -5,18 +5,27 @@ object TimeRate {
   type CountPerSecond = List[Int]
   type SecondsInPeriod = Int
 
+
   private val second: SecondsInPeriod = 1
   private val minute: SecondsInPeriod = 60
   private val hour: SecondsInPeriod = 3600
   private val initFraction = Fraction(0, 1)
 
+  private[this] var countPerSeg: CountPerSecond = List.empty
+  private[this] var lastCount: Int = 0
+
+  def insertSecond(total: Int): Unit = {
+    countPerSeg = (total - lastCount) :: countPerSeg
+    lastCount = total
+  }
+
   def ratePerSecond(list: CountPerSecond): Fraction = calculateRate(second, list, 0)
   def ratePerMinute(list: CountPerSecond, avgSec: Double): Fraction = calculateRate(minute, list, avgSec)
   def ratePerHour(list: CountPerSecond, avgSec: Double): Fraction = calculateRate(hour, list, avgSec)
 
-  def calculateRates(list: CountPerSecond): (Double, Double, Double) = {
-    val avgSec = ratePerSecond(list).roundedDouble()
-    (avgSec, ratePerMinute(list, avgSec).roundedDouble(), ratePerHour(list, avgSec).roundedDouble())
+  def calculateRates: (Double, Double, Double) = {
+    val avgSec = ratePerSecond(countPerSeg).roundedDouble()
+    (avgSec, ratePerMinute(countPerSeg, avgSec).roundedDouble(), ratePerHour(countPerSeg, avgSec).roundedDouble())
   }
 
   private[this] def calculateRate(period: SecondsInPeriod, list: CountPerSecond, avgSec: Double): Fraction = {

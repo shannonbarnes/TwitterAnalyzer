@@ -7,6 +7,7 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 trait TweetExtration extends ProcessState { self: Tweet =>
+
   val deleteCount: Int = 0
   val parseErrors: Int = 0
   val tweetCount: Int = 1
