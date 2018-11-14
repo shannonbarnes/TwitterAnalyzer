@@ -62,7 +62,6 @@ trait TwitterPipelineImp {
        ts <- processStream(q)
      } yield ts
 
-
   private def accumulateSink(s: IOStream[Either[ProcessedTweets, FiniteDuration]]): IOStream[Unit] = s map {
     case Left(state) => currentState = currentState.combine(state)
     case Right(_) => TimeRate.insertSecond(currentState.all)

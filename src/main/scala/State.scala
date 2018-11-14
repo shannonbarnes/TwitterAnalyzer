@@ -17,7 +17,6 @@ object State {
 
   implicit val mapHelper: MergeHelper[ItemList, CountMap] = (a, b) => a.foldLeft(b){case (m, v) => m + ((v, m(v) + 1))}
 
-
   val displayCount: Int = ConfigFactory.load.getInt("maxTopDisplay")
 
   implicit class CountMapOps(map: CountMap) {
@@ -28,7 +27,6 @@ object State {
   val emptyMap: CountMap = Map.empty.withDefaultValue(0)
   val emptyProcess: ConcreteState[ItemList] = new ConcreteState(List.empty)
   val emptyCumulativeState: ConcreteState[CountMap] = new ConcreteState(emptyMap)
-
 }
 
 class ConcreteState[A](
