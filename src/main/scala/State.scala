@@ -15,10 +15,8 @@ object State {
 
   implicit val listHelper: MergeHelper[ItemList, ItemList] = (a, b) => a ::: b
 
-  implicit val mapHelper: MergeHelper[ItemList, CountMap] = new MergeHelper[ItemList, CountMap] {
-    def merge(a: ItemList, b: CountMap): CountMap = a.foldLeft(b){case (m, v) => insertInv(m, v)}
-    private def insertInv(m: CountMap, v : String): CountMap = m + ((v, m(v) + 1))
-  }
+  implicit val mapHelper: MergeHelper[ItemList, CountMap] = (a, b) => a.foldLeft(b){case (m, v) => m + ((v, m(v) + 1))}
+
 
   val displayCount: Int = ConfigFactory.load.getInt("maxTopDisplay")
 

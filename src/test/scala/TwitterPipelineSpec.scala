@@ -8,7 +8,7 @@ import io.circe.syntax._
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.duration._
 
-class TwitterPipelineSpec extends FlatSpec with Matchers {
+class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 
   implicit val ec = global
 
@@ -19,51 +19,73 @@ class TwitterPipelineSpec extends FlatSpec with Matchers {
     }
 
 
-  class TestPipeline(in: List[TwitterObject], delay: FiniteDuration) extends TwitterPipelineImp {
-    override def source: Stream[IO, Json] = Stream(in.map(_.asJson) :_*) zipLeft Stream.fixedDelay(delay)
+  class TestPipeline(in: List[TwitterObject], delay: Option[FiniteDuration]) extends TwitterPipelineImp {
+    override def source: Stream[IO, Json] = {
+      val s = Stream(in.map(_.asJson) :_*)
+      delay.fold[Stream[IO, Json]](s)(d => s zipLeft Stream.fixedDelay(d))
+    }
   }
 
   def gen(obj: TwitterObject, num: Int): List[TwitterObject] =
     (for (_ <- 1 to num) yield obj).toList
 
-  behavior of "TwitterPipeline"
+  val baseTweet = Tweet("id", "this is a tweet", Entities(List.empty, List.empty, None))
+  val emojiSmileTweet = baseTweet.copy(text = "Smile \uD83D\uDE00")
+  val emojiSmileAndWinkTweet = baseTweet.copy(text = "Smile \uD83D\uDE00 and wink \uD83D\uDE09")
 
-  it should "return correct stats" in {
-
-    val baseTweet = Tweet("id", "this is a tweet", Entities(List.empty, List.empty, None))
-    val emojiSmileTweet = baseTweet.copy(text = "Smile \uD83D\uDE00")
-    val emojiSmileAndWinkTweet = baseTweet.copy(text = "Smile \uD83D\uDE00 and wink \uD83D\uDE09")
-
-    val parserErrorN = 1
-    val baseN = 999
-    val deleteN = 70
-    val smileOnlyN = 90
-    val smileWinkN = 100
-    val smailTotalN = smileOnlyN + smileWinkN
+  val parserErrorN = 1
+  val baseN = 999
+  val deleteN = 70
+  val smileOnlyN = 90
+  val smileWinkN = 100
+  val smailTotalN = smileOnlyN + smileWinkN
 
 
-    val tweets: List[TwitterObject] =
-      ParseError ::
+  val tweets: List[TwitterObject] =
+    ParseError ::
       gen(baseTweet, baseN) :::
       gen(DeleteTweet, deleteN) :::
       gen(emojiSmileTweet, smileOnlyN) :::
       gen(emojiSmileAndWinkTweet, smileWinkN)
 
-    val tweetCount = tweets.size - deleteN - parserErrorN
+  val tweetCount: Int = tweets.size - deleteN - parserErrorN
 
-    val testPipeline = new TestPipeline(tweets, 5.millis)
+  behavior of "TwitterPipeline"
 
-    testPipeline.tweetStream.compile.drain.unsafeRunAsyncAndForget()
-    Thread.sleep(1000 * 10)
-    val stats = testPipeline.currentStats
-    println(stats.ratePerSecond)
-    stats.allCount should be (tweets.size)
-    stats.deleteCount should be (deleteN)
-    stats.tweetCount should be (tweetCount)
-    stats.parseErrors should be (parserErrorN)
-    stats.percentWithEmojis should be (Fraction(smailTotalN, tweetCount).percentage)
-    stats.topEmojis.head should be (NameCount("\uD83D\uDE00", smailTotalN))
-    stats.topEmojis(1) should be (NameCount("\uD83D\uDE09", smileWinkN))
+  it should "return correct stats with delay" in {
+
+    val testPipeline = new TestPipeline(tweets, Some(5.millis))
+
+    val f = testPipeline.tweetStream.take(1260/10 + 8).compile.drain.unsafeToFuture()
+
+    f.map { _  =>
+      val stats = testPipeline.currentStats
+      stats.allCount should be(tweets.size)
+      stats.deleteCount should be(deleteN)
+      stats.tweetCount should be(tweetCount)
+      stats.parseErrors should be(parserErrorN)
+      stats.percentWithEmojis should be(Fraction(smailTotalN, tweetCount).percentage)
+      stats.topEmojis.head should be(NameCount("\uD83D\uDE00", smailTotalN))
+      stats.topEmojis(1) should be(NameCount("\uD83D\uDE09", smileWinkN))
+    }
+  }
+
+  it should "return correct stats without delay" in {
+
+    val testPipeline = new TestPipeline(tweets, None)
+
+    val f = testPipeline.tweetStream.take(1260/10).compile.drain.unsafeToFuture()
+
+    f.map { _  =>
+      val stats = testPipeline.currentStats
+      stats.allCount should be(tweets.size)
+      stats.deleteCount should be(deleteN)
+      stats.tweetCount should be(tweetCount)
+      stats.parseErrors should be(parserErrorN)
+      stats.percentWithEmojis should be(Fraction(smailTotalN, tweetCount).percentage)
+      stats.topEmojis.head should be(NameCount("\uD83D\uDE00", smailTotalN))
+      stats.topEmojis(1) should be(NameCount("\uD83D\uDE09", smileWinkN))
+    }
   }
 
 }
