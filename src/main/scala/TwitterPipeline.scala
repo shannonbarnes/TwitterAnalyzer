@@ -7,11 +7,8 @@ import cats.effect._
 import fs2.{Pipe, Stream}
 import jawnfs2._
 import com.typesafe.config.ConfigFactory
-import fs2.concurrent.{Queue, Signal, SignallingRef}
+import fs2.concurrent.{Queue, SignallingRef}
 import io.circe.Json
-import io.circe.syntax._
-import io.circe.generic.auto._
-
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global

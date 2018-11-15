@@ -1,4 +1,4 @@
-import ConcreteState.{ItemList, ProcessedTweets}
+import ConcreteState.ItemList
 import com.typesafe.config.ConfigFactory
 
 trait MergeHelper[A, B] {
