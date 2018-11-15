@@ -1,6 +1,6 @@
 import java.net.URL
 
-import ConcreteState.{ItemList, ProcessedTweets}
+import ConcreteState.ProcessedTweets
 import com.vdurmont.emoji.EmojiParser
 
 import scala.collection.JavaConverters._

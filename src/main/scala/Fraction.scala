@@ -1,8 +1,6 @@
 
 
-case class Fraction(num: Double, den: Int) {
-  def addToNum(v: Double): Fraction = this.copy(num = num + v)
-  def addToNumIncDem(v: Double): Fraction = this.copy(num = num + v, den = den + 1)
+case class Fraction(num: Int, den: Int) {
 
   def roundedDouble(places: Int = 2, mult: Int = 1): Double =
     if (den == 0) 0 else

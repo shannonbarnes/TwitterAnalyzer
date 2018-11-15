@@ -4,7 +4,6 @@ trait MergeHelper[A, B] {
   def merge(a: A, b: B): B
 }
 
-
 object ConcreteState {
 
   type CountMap = Map[String, Int]

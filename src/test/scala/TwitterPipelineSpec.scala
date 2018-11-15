@@ -84,6 +84,7 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
       _ <- f
       stats <- testPipeline.currentStats.unsafeToFuture()
     } yield {
+      println(stats.ratePerSecond)
       stats.allCount should be(tweets.size)
       stats.deleteCount should be(deleteN)
       stats.tweetCount should be(tweetCount)

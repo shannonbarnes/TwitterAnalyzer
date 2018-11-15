@@ -16,7 +16,6 @@ object Main extends IOApp {
 
   }.orNotFound
 
-
   def run(args: List[String]): IO[ExitCode] = {
 
     val server = BlazeServerBuilder[IO]
