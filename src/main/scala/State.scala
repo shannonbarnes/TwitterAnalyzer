@@ -1,11 +1,10 @@
-import ConcreteState.ItemList
-import com.typesafe.config.ConfigFactory
+
 
 trait MergeHelper[A, B] {
   def merge(a: A, b: B): B
 }
 
-object ConcreteState {
+object State {
 
   type CountMap = Map[String, Int]
   type ItemList = List[String]
@@ -17,19 +16,12 @@ object ConcreteState {
 
   implicit val mapHelper: MergeHelper[ItemList, CountMap] = (a, b) => a.foldLeft(b){case (m, v) => m + ((v, m(v) + 1))}
 
-  val displayCount: Int = ConfigFactory.load.getInt("maxTopDisplay")
-
-  implicit class CountMapOps(map: CountMap) {
-    def sortedList(num: Int = displayCount): Seq[NameCount] =
-      map.toSeq.sortWith(_._2 > _._2).take(num).map{case (name,count) => NameCount(name, count)}
-  }
-
   val emptyMap: CountMap = Map.empty.withDefaultValue(0)
   val emptyProcess: ConcreteState[ItemList] = ConcreteState(0, 0, 0, 0, 0, 0, 0, List.empty, List.empty, List.empty)
   val emptyCumulativeState: CumulativeState = ConcreteState(0, 0, 0, 0, 0, 0, 0, emptyMap, emptyMap, emptyMap)
 }
 
-case class ConcreteState[A](
+case class ConcreteState[A] private(
   seconds: Int,
   deleteCount: Int,
   parseErrors: Int,
@@ -45,6 +37,8 @@ case class ConcreteState[A](
   def incSeconds: ConcreteState[A] = {
     this.copy(seconds = seconds + 1)
   }
+
+  import State.ItemList
 
   def combineTweet(t: TwitterObject)(implicit ch: MergeHelper[ItemList, A]): ConcreteState[A] = t match {
     case t: Tweet  => combine(t)

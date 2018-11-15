@@ -1,12 +1,20 @@
-import ConcreteState._
+import State._
+import com.typesafe.config.ConfigFactory
 
-object CurrentStats {
+object StatsSnapshot {
 
-  def fromState(s: CumulativeState): CurrentStats = {
+  val displayCount: Int = ConfigFactory.load.getInt("maxTopDisplay")
+
+  implicit class CountMapOps(map: CountMap) {
+    def priorityList(num: Int = displayCount): Seq[NameCount] =
+      map.toSeq.sortWith(_._2 > _._2).take(num).map{case (name,count) => NameCount(name, count)}
+  }
+
+  def fromState(s: CumulativeState): StatsSnapshot = {
     val all = s.all
     val seconds = if (s.seconds == 0) 1 else s.seconds
 
-    CurrentStats(
+    StatsSnapshot(
       allCount = all,
       tweetCount = s.tweetCount,
       deleteCount = s.deleteCount,
@@ -19,14 +27,14 @@ object CurrentStats {
       percentWithUrls = Fraction(s.containedUrlCount, s.tweetCount).percentage,
       percentWithPhotos = Fraction(s.containsPhotoCount, s.tweetCount).percentage,
       percentDeletes = Fraction(s.deleteCount, all).percentage,
-      topHashTags = s.hashtags.sortedList(),
-      topEmojis = s.emojis.sortedList(),
-      topDomains = s.domains.sortedList()
+      topHashTags = s.hashtags.priorityList(),
+      topEmojis = s.emojis.priorityList(),
+      topDomains = s.domains.priorityList()
     )
   }
 }
 
-final case class CurrentStats(
+final case class StatsSnapshot(
     allCount: Int,
     tweetCount: Int,
     deleteCount: Int,
@@ -46,3 +54,13 @@ final case class CurrentStats(
 
 
 final case class NameCount(name: String, count: Int)
+
+case class Fraction(num: Int, den: Int) {
+
+  def roundedDouble(places: Int = 2, mult: Int = 1): Double =
+    if (den == 0) 0 else
+      BigDecimal(num.toDouble/den * mult).setScale(places, BigDecimal.RoundingMode.HALF_UP).toDouble
+
+  def percentage: Double = roundedDouble(mult = 100)
+
+}

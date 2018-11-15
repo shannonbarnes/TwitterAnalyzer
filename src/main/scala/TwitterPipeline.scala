@@ -1,4 +1,4 @@
-import ConcreteState._
+import State._
 import cats.effect.IO.timer
 import org.http4s._
 import org.http4s.client.blaze._
@@ -33,9 +33,9 @@ trait TwitterPipelineImp {
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
 
   private val queue = Queue.unbounded[IO, Json]
-  private val state = SignallingRef(ConcreteState.emptyCumulativeState).unsafeRunSync()
+  private val state = SignallingRef(emptyCumulativeState).unsafeRunSync()
 
-  def currentStats: IO[CurrentStats] = state.get.map(CurrentStats.fromState)
+  def currentStats: IO[StatsSnapshot] = state.get.map(StatsSnapshot.fromState)
 
   private def authenticate: IO[Request[IO]] =
     oauth1.signRequest(
@@ -66,7 +66,7 @@ trait TwitterPipelineImp {
         chunks.map(
           _.as[TwitterObject]
             .fold(_ => ParseError, identity))
-          .foldLeft(ConcreteState.emptyProcess)(_ combineTweet _)
+          .foldLeft(emptyProcess)(_ combineTweet _)
       )
 
       Stream.eval(

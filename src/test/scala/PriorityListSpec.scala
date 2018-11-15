@@ -1,4 +1,6 @@
-import ConcreteState._
+
+import StatsSnapshot._
+import State._
 import org.scalatest._
 
 class PriorityListSpec extends FlatSpec with Matchers {
@@ -10,15 +12,15 @@ class PriorityListSpec extends FlatSpec with Matchers {
    }
 
   "PriorityList" should "return a list of ordered items" in {
-    setup.sortedList() should be (Seq(NameCount("D", 5), NameCount("C", 4), NameCount("A", 3), NameCount("B", 1)))
+    setup.priorityList() should be (Seq(NameCount("D", 5), NameCount("C", 4), NameCount("A", 3), NameCount("B", 1)))
 
   }
 
   it should "only return max items" in {
-    setup.sortedList(2) should be (Seq(NameCount("D", 5), NameCount("C", 4)))
+    setup.priorityList(2) should be (Seq(NameCount("D", 5), NameCount("C", 4)))
   }
 
   it should "handle empty" in {
-    Map.empty[String, Int].sortedList() should be (Seq.empty)
+    Map.empty[String, Int].priorityList() should be (Seq.empty)
   }
 }
