@@ -13,140 +13,142 @@ Refresh the following link to get up to date stats
 
 
     {
-      "allCount": 1745,
-      "tweetCount": 1577,
-      "deleteCount": 168,
-      "parseErrors": 0,
-      "ratePerSecond": 37.93,
-      "ratePerMinute": 2235,
-      "ratePerHour": 126135,
-      "percentWithEmojis": 16.55,
-      "percentWithUrls": 21.31,
-      "percentWithPhotos": 20.1,
-      "topHashTags": [
-        {
-          "name": "Rayito",
-          "count": 6
-        },
-        {
-          "name": "SibroGantengSemriwing",
-          "count": 5
-        },
-        {
-          "name": "BTS",
-          "count": 4
-        },
-        {
-          "name": "Rayito3",
-          "count": 3
-        },
-        {
-          "name": "Rayito2",
-          "count": 3
-        },
-        {
-          "name": "1FIRST",
-          "count": 3
-        },
-        {
-          "name": "MTVEMABiggestFansBTS",
-          "count": 3
-        },
-        {
-          "name": "اقترح_وظيفه_للسيسي",
-          "count": 2
-        },
-        {
-          "name": "الاتحاد",
-          "count": 2
-        },
-        {
-          "name": "FunkoNYCC",
-          "count": 2
-        }
-      ],
-      "topEmojis": [
-        {
-          "name": "😂",
-          "count": 93
-        },
-        {
-          "name": "🔥",
-          "count": 29
-        },
-        {
-          "name": "❤",
-          "count": 28
-        },
-        {
-          "name": "😍",
-          "count": 21
-        },
-        {
-          "name": "😭",
-          "count": 19
-        },
-        {
-          "name": "👏",
-          "count": 15
-        },
-        {
-          "name": "🙄",
-          "count": 13
-        },
-        {
-          "name": "⚡",
-          "count": 12
-        },
-        {
-          "name": "♥",
-          "count": 9
-        },
-        {
-          "name": "🙏",
-          "count": 9
-        }
-      ],
-      "topDomains": [
-        {
-          "name": "twitter.com",
-          "count": 181
-        },
-        {
-          "name": "du3a.org",
-          "count": 24
-        },
-        {
-          "name": "youtu.be",
-          "count": 11
-        },
-        {
-          "name": "www.facebook.com",
-          "count": 11
-        },
-        {
-          "name": "bit.ly",
-          "count": 6
-        },
-        {
-          "name": "curiouscat.me",
-          "count": 6
-        },
-        {
-          "name": "dlvr.it",
-          "count": 6
-        },
-        {
-          "name": "ift.tt",
-          "count": 4
-        },
-        {
-          "name": "www.instagram.com",
-          "count": 4
-        },
-        {
-          "name": "pbs.twimg.com",
-          "count": 3
-        }
-      ]
+       "allCount":3860,
+       "tweetCount":3451,
+       "deleteCount":409,
+       "parseErrors":0,
+       "elapsedSeconds":90,
+       "ratePerSecond":42.89,
+       "ratePerMinute":2573.33,
+       "ratePerHour":154400,
+       "percentWithEmojis":17.73,
+       "percentWithUrls":21.12,
+       "percentWithPhotos":19.94,
+       "percentDeletes":10.6,
+       "topHashTags":[
+          {
+             "name":"BTS",
+             "count":9
+          },
+          {
+             "name":"18YrsOfTorchBearerNTR",
+             "count":7
+          },
+          {
+             "name":"ThursdayThoughts",
+             "count":6
+          },
+          {
+             "name":"GOT7",
+             "count":5
+          },
+          {
+             "name":"방탄소년단",
+             "count":5
+          },
+          {
+             "name":"갓세븐",
+             "count":5
+          },
+          {
+             "name":"MAMAVOTE",
+             "count":4
+          },
+          {
+             "name":"北上双葉",
+             "count":4
+          },
+          {
+             "name":"ALDUB40thMonthsary",
+             "count":4
+          },
+          {
+             "name":"私を布教して",
+             "count":4
+          }
+       ],
+       "topEmojis":[
+          {
+             "name":"😂",
+             "count":251
+          },
+          {
+             "name":"😍",
+             "count":50
+          },
+          {
+             "name":"❤",
+             "count":48
+          },
+          {
+             "name":"🔥",
+             "count":43
+          },
+          {
+             "name":"🌗",
+             "count":43
+          },
+          {
+             "name":"🌘",
+             "count":42
+          },
+          {
+             "name":"🌑",
+             "count":42
+          },
+          {
+             "name":"🌒",
+             "count":42
+          },
+          {
+             "name":"🌖",
+             "count":42
+          },
+          {
+             "name":"🌕",
+             "count":42
+          }
+       ],
+       "topDomains":[
+          {
+             "name":"twitter.com",
+             "count":386
+          },
+          {
+             "name":"bit.ly",
+             "count":38
+          },
+          {
+             "name":"du3a.org",
+             "count":35
+          },
+          {
+             "name":"youtu.be",
+             "count":29
+          },
+          {
+             "name":"www.facebook.com",
+             "count":28
+          },
+          {
+             "name":"www.instagram.com",
+             "count":12
+          },
+          {
+             "name":"curiouscat.me",
+             "count":9
+          },
+          {
+             "name":"goo.gl",
+             "count":9
+          },
+          {
+             "name":"dlvr.it",
+             "count":8
+          },
+          {
+             "name":"www.youtube.com",
+             "count":6
+          }
+       ]
     }
