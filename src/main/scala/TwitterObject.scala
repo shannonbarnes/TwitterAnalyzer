@@ -13,17 +13,12 @@ object TwitterObject {
   )
 }
 
-sealed trait TwitterObject extends ProcessedTweets
+sealed trait TwitterObject
+
+object DeleteTweet extends TwitterObject
+object ParseError extends TwitterObject
 
 final case class Tweet(id_str: String, text: String, entities: Entities) extends TweetProcessor with TwitterObject
-
-object DeleteTweet extends ConcreteState(List.empty[String]) with TwitterObject {
-  override val deleteCount: Int = 1
-}
-
-object ParseError extends  ConcreteState(List.empty[String]) with TwitterObject {
-  override val parseErrors: Int = 1
-}
 
 final case class Entities(hashtags: List[Hashtag], urls: List[Url], media: Option[List[Media]])
 final case class Hashtag(indices: List[Int], text: String)

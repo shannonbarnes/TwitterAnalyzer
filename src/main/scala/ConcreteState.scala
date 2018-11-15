@@ -1,3 +1,4 @@
+import ConcreteState.{ItemList, ProcessedTweets}
 import com.typesafe.config.ConfigFactory
 
 trait MergeHelper[A, B] {
@@ -24,8 +25,8 @@ object ConcreteState {
   }
 
   val emptyMap: CountMap = Map.empty.withDefaultValue(0)
-  val emptyProcess: ConcreteState[ItemList] = new ConcreteState(List.empty)
-  val emptyCumulativeState: CumulativeState = new ConcreteState(emptyMap)
+  val emptyProcess: ConcreteState[ItemList] = ConcreteState(0, 0, 0, 0, 0, 0, 0, List.empty, List.empty, List.empty)
+  val emptyCumulativeState: CumulativeState = ConcreteState(0, 0, 0, 0, 0, 0, 0, emptyMap, emptyMap, emptyMap)
 }
 
 case class ConcreteState[A](
@@ -40,13 +41,15 @@ case class ConcreteState[A](
   domains: A,
   emojis: A,
 ) extends State[A] {
-
-  def this(empty: A) {
-    this(0, 0, 0, 0, 0, 0, 0, empty, empty, empty)
-  }
-
+  
   def incSeconds: ConcreteState[A] = {
     this.copy(seconds = seconds + 1)
+  }
+
+  def combineTweet(t: TwitterObject)(implicit ch: MergeHelper[ItemList, A]): ConcreteState[A] = t match {
+    case t: Tweet  => combine(t)
+    case DeleteTweet => copy(deleteCount = deleteCount + 1)
+    case ParseError => copy(parseErrors = parseErrors + 1)
   }
 
   def combine[B](a: State[B])(implicit ch: MergeHelper[B, A]): ConcreteState[A] = {

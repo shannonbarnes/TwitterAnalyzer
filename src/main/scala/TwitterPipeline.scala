@@ -69,7 +69,7 @@ trait TwitterPipelineImp {
         chunks.map(
           _.as[TwitterObject]
             .fold(_ => ParseError, identity))
-          .foldLeft(ConcreteState.emptyProcess)(_ combine _)
+          .foldLeft(ConcreteState.emptyProcess)(_ combineTweet _)
       )
 
       Stream.eval(

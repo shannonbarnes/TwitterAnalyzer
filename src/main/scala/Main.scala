@@ -13,7 +13,6 @@ object Main extends IOApp {
   val statServer = HttpRoutes.of[IO] {
     case GET -> Root / "stats" =>
       Ok(TwitterPipeline.currentStats.map(_.asJson))
-
   }.orNotFound
 
   def run(args: List[String]): IO[ExitCode] = {
