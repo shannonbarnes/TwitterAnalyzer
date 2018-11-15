@@ -35,7 +35,7 @@ trait TwitterPipelineImp {
   private val queue = Queue.unbounded[IO, Json]
   private val state = SignallingRef(emptyCumulativeState).unsafeRunSync()
 
-  def currentStats: IO[StatsSnapshot] = state.get.map(StatsSnapshot.fromState)
+  def snapshot: IO[StatsSnapshot] = state.get.map(StatsSnapshot.fromState)
 
   private def authenticate: IO[Request[IO]] =
     oauth1.signRequest(
