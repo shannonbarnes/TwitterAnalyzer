@@ -1,13 +1,13 @@
 import java.net.URL
 
-import State.ProcessedTweets
+import ConcreteState.{ItemList, ProcessedTweets}
 import com.vdurmont.emoji.EmojiParser
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
 trait TweetProcessor extends ProcessedTweets { self: Tweet =>
-
+  val seconds: Int = 0
   val deleteCount: Int = 0
   val parseErrors: Int = 0
   val tweetCount: Int = 1

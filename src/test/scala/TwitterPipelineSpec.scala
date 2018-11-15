@@ -13,15 +13,15 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
   implicit val ec = global
 
   implicit val encodeTwtterObject: Encoder[TwitterObject] = {
-      case t: Tweet => t.asJson
-      case DeleteTweet => Json.obj("delete" -> Json.fromBoolean(true))
-      case ParseError => Json.obj("Unknown" -> Json.fromBoolean(false))
-    }
+    case t: Tweet => t.asJson
+    case DeleteTweet => Json.obj("delete" -> Json.fromBoolean(true))
+    case ParseError => Json.obj("Unknown" -> Json.fromBoolean(false))
+  }
 
 
   class TestPipeline(in: List[TwitterObject], delay: Option[FiniteDuration]) extends TwitterPipelineImp {
     override def source: Stream[IO, Json] = {
-      val s = Stream(in.map(_.asJson) :_*)
+      val s = Stream(in.map(_.asJson): _*)
       delay.fold[Stream[IO, Json]](s)(d => s zipLeft Stream.fixedDelay(d))
     }
   }
@@ -56,10 +56,12 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 
     val testPipeline = new TestPipeline(tweets, Some(5.millis))
 
-    val f = testPipeline.tweetStream.take(1260/10 + 8).compile.drain.unsafeToFuture()
+    val f = testPipeline.tweetStream.compile.drain.unsafeToFuture()
 
-    f.map { _  =>
-      val stats = testPipeline.currentStats
+    for {
+      _ <- f
+      stats <- testPipeline.currentStats.unsafeToFuture()
+    } yield {
       stats.allCount should be(tweets.size)
       stats.deleteCount should be(deleteN)
       stats.tweetCount should be(tweetCount)
@@ -67,17 +69,21 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
       stats.percentWithEmojis should be(Fraction(smailTotalN, tweetCount).percentage)
       stats.topEmojis.head should be(NameCount("\uD83D\uDE00", smailTotalN))
       stats.topEmojis(1) should be(NameCount("\uD83D\uDE09", smileWinkN))
+
     }
   }
+
 
   it should "return correct stats without delay" in {
 
     val testPipeline = new TestPipeline(tweets, None)
 
-    val f = testPipeline.tweetStream.take(1260/10).compile.drain.unsafeToFuture()
+    val f = testPipeline.tweetStream.compile.drain.unsafeToFuture()
 
-    f.map { _  =>
-      val stats = testPipeline.currentStats
+    for {
+      _ <- f
+      stats <- testPipeline.currentStats.unsafeToFuture()
+    } yield {
       stats.allCount should be(tweets.size)
       stats.deleteCount should be(deleteN)
       stats.tweetCount should be(tweetCount)
@@ -85,6 +91,7 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
       stats.percentWithEmojis should be(Fraction(smailTotalN, tweetCount).percentage)
       stats.topEmojis.head should be(NameCount("\uD83D\uDE00", smailTotalN))
       stats.topEmojis(1) should be(NameCount("\uD83D\uDE09", smileWinkN))
+
     }
   }
 

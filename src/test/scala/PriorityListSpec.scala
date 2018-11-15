@@ -1,4 +1,4 @@
-import State._
+import ConcreteState._
 import org.scalatest._
 
 class PriorityListSpec extends FlatSpec with Matchers {

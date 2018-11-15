@@ -1,4 +1,4 @@
-import State._
+import ConcreteState._
 import cats.effect.IO.timer
 import org.http4s._
 import org.http4s.client.blaze._
@@ -7,8 +7,11 @@ import cats.effect._
 import fs2.{Pipe, Stream}
 import jawnfs2._
 import com.typesafe.config.ConfigFactory
-import fs2.concurrent.Queue
+import fs2.concurrent.{Queue, Signal, SignallingRef}
 import io.circe.Json
+import io.circe.syntax._
+import io.circe.generic.auto._
+
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
@@ -24,8 +27,6 @@ trait TwitterPipelineImp {
 
   type IOStream[A] = Stream[IO, A]
 
-  import TwitterObject._
-
   private[this] val conf = ConfigFactory.load
 
   private val apiKey: String = conf.getString("apiKey")
@@ -34,11 +35,10 @@ trait TwitterPipelineImp {
   private val accessTokenSecret: String = conf.getString("accessTokenSecret")
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
 
-  private[this] var currentState = State.emptyCumulativeState
-
-  def currentStats: CurrentStats = CurrentStats.fromState(currentState)
-
   private val queue = Queue.unbounded[IO, Json]
+  private val state = SignallingRef(ConcreteState.emptyCumulativeState).unsafeRunSync()
+
+  def currentStats: IO[CurrentStats] = state.get.map(CurrentStats.fromState)
 
   private def authenticate: IO[Request[IO]] =
     oauth1.signRequest(
@@ -58,28 +58,31 @@ trait TwitterPipelineImp {
 
   def tweetStream: IOStream[Unit] =
      for {
-       q  <- Stream.eval(queue)
-       ts <- processStream(q)
-     } yield ts
+       que  <- Stream.eval(queue)
+       str  <- processStream(que)
+     } yield str
 
-  private def accumulateSink(s: IOStream[Either[ProcessedTweets, FiniteDuration]]): IOStream[Unit] = s map {
-    case Left(state) => currentState = currentState.combine(state)
-    case Right(_) => TimeRate.insertSecond(currentState.all)
-  }
-
-  def process(take: Int): Pipe[IO, Json, IOStream[ProcessedTweets]] = in => {
+  def process(take: Int): Pipe[IO, Json, IOStream[Unit]] = in => {
     in.chunkN(take).map { chunks =>
+
+      val processedTweets = IO(
+        chunks.map(
+          _.as[TwitterObject]
+            .fold(_ => ParseError, identity))
+          .foldLeft(ConcreteState.emptyProcess)(_ combine _)
+      )
+
       Stream.eval(
-        IO(
-          chunks.map(_.as[TwitterObject].fold(_ => ParseError, identity)).foldLeft(State.emptyProcess)(_ combine _)
-        )
+        processedTweets.flatMap { t =>
+          state.update(_.combine(t))
+        }
       )
     }
   }
 
   private def processStream(queue: Queue[IO, Json]): IOStream[Unit] = {
 
-    val timer = Stream.awakeEvery[IO](1.seconds)
+    val timer: IOStream[Unit] = Stream.awakeEvery[IO](1.seconds).evalMap(_ => state.update(_.incSeconds))
 
     val producer = source
       .to(queue.enqueue)
@@ -88,9 +91,8 @@ trait TwitterPipelineImp {
       .dequeue
       .through(process(10))
       .parJoin(3)
-      .either(timer)
-      .to(accumulateSink)
 
-    consumer.concurrently(producer)
+    producer.mergeHaltBoth(consumer).mergeHaltBoth(timer)
   }
+
  }

@@ -5,13 +5,13 @@ trait MergeHelper[A, B] {
 }
 
 
-object State {
+object ConcreteState {
 
   type CountMap = Map[String, Int]
   type ItemList = List[String]
 
   type ProcessedTweets = State[ItemList]
-  type CumulativeState = State[CountMap]
+  type CumulativeState = ConcreteState[CountMap]
 
   implicit val listHelper: MergeHelper[ItemList, ItemList] = (a, b) => a ::: b
 
@@ -26,27 +26,32 @@ object State {
 
   val emptyMap: CountMap = Map.empty.withDefaultValue(0)
   val emptyProcess: ConcreteState[ItemList] = new ConcreteState(List.empty)
-  val emptyCumulativeState: ConcreteState[CountMap] = new ConcreteState(emptyMap)
+  val emptyCumulativeState: CumulativeState = new ConcreteState(emptyMap)
 }
 
-class ConcreteState[A](
-  val deleteCount: Int,
-  val parseErrors: Int,
-  val tweetCount: Int,
-  val containedEmojiCount: Int,
-  val containedUrlCount: Int,
-  val containsPhotoCount: Int,
-  val hashtags: A,
-  val domains: A,
-  val emojis: A,
+case class ConcreteState[A](
+  seconds: Int,
+  deleteCount: Int,
+  parseErrors: Int,
+  tweetCount: Int,
+  containedEmojiCount: Int,
+  containedUrlCount: Int,
+  containsPhotoCount: Int,
+  hashtags: A,
+  domains: A,
+  emojis: A,
 ) extends State[A] {
 
   def this(empty: A) {
-    this(0, 0, 0, 0, 0, 0, empty, empty, empty)
+    this(0, 0, 0, 0, 0, 0, 0, empty, empty, empty)
+  }
+
+  def incSeconds: ConcreteState[A] = {
+    this.copy(seconds = seconds + 1)
   }
 
   def combine[B](a: State[B])(implicit ch: MergeHelper[B, A]): ConcreteState[A] = {
-    new ConcreteState (
+    copy (
       deleteCount = deleteCount + a.deleteCount,
       parseErrors = parseErrors + a.parseErrors,
       tweetCount = tweetCount + a.tweetCount,
@@ -61,6 +66,7 @@ class ConcreteState[A](
 }
 
 trait State[A] {
+  def seconds: Int
   def deleteCount: Int
   def parseErrors: Int
   def tweetCount: Int

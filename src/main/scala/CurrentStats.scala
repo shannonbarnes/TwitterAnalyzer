@@ -1,4 +1,4 @@
-import State._
+import ConcreteState._
 
 object CurrentStats {
 
@@ -10,6 +10,7 @@ object CurrentStats {
       tweetCount = s.tweetCount,
       deleteCount = s.deleteCount,
       parseErrors = s.parseErrors,
+      elapsedSeconds = s.seconds,
       ratePerSecond = ratePerSec,
       ratePerMinute = ratePerMin,
       ratePerHour = ratePerHour,
@@ -29,6 +30,7 @@ final case class CurrentStats(
     tweetCount: Int,
     deleteCount: Int,
     parseErrors: Int,
+    elapsedSeconds: Int,
     ratePerSecond: Double,
     ratePerMinute: Double,
     ratePerHour: Double,

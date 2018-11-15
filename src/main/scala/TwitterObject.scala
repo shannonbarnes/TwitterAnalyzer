@@ -1,6 +1,6 @@
 import io.circe.{Decoder, FailedCursor}
 import io.circe.generic.auto._
-import State._
+import ConcreteState._
 
 object TwitterObject {
 
@@ -17,11 +17,11 @@ sealed trait TwitterObject extends ProcessedTweets
 
 final case class Tweet(id_str: String, text: String, entities: Entities) extends TweetProcessor with TwitterObject
 
-case object DeleteTweet extends ConcreteState(List.empty[String]) with TwitterObject {
+object DeleteTweet extends ConcreteState(List.empty[String]) with TwitterObject {
   override val deleteCount: Int = 1
 }
 
-case object ParseError extends  ConcreteState(List.empty[String]) with TwitterObject {
+object ParseError extends  ConcreteState(List.empty[String]) with TwitterObject {
   override val parseErrors: Int = 1
 }
 
