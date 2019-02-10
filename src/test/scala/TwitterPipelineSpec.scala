@@ -1,9 +1,12 @@
+import State.{CumulativeState, emptyCumulativeState}
 import cats.effect.IO
 import fs2.Stream
+import fs2.concurrent.SignallingRef
 import io.circe.{Encoder, Json}
 import org.scalatest._
 import io.circe.generic.auto._
 import io.circe.syntax._
+import cats.effect._
 
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.duration._
@@ -11,6 +14,9 @@ import scala.concurrent.duration._
 class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 
   implicit val ec = global
+  implicit val ct = IO.contextShift(global)
+  implicit val ce = implicitly[ConcurrentEffect[IO]]
+
 
   implicit val encodeTwtterObject: Encoder[TwitterObject] = {
     case t: Tweet => t.asJson
@@ -19,7 +25,7 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
   }
 
 
-  class TestPipeline(in: List[TwitterObject], delay: Option[FiniteDuration]) extends TwitterPipelineImp {
+  class TestPipeline(in: List[TwitterObject], delay: Option[FiniteDuration], state: SignallingRef[IO, CumulativeState]) extends TwitterPipeline(state) {
     override def source: Stream[IO, Json] = {
       val s = Stream(in.map(_.asJson): _*)
       delay.fold[Stream[IO, Json]](s)(d => s zipLeft Stream.fixedDelay(d))
@@ -53,8 +59,8 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
   behavior of "TwitterPipeline"
 
   it should "return correct stats with delay" in {
-
-    val testPipeline = new TestPipeline(tweets, Some(5.millis))
+    val state = SignallingRef(emptyCumulativeState).unsafeRunSync()
+    val testPipeline = new TestPipeline(tweets, Some(5.millis), state)
 
     val f = testPipeline.tweetStream.compile.drain.unsafeToFuture()
 
@@ -75,8 +81,8 @@ class TwitterPipelineSpec extends AsyncFlatSpec with Matchers {
 
 
   it should "return correct stats without delay" in {
-
-    val testPipeline = new TestPipeline(tweets, None)
+    val state = SignallingRef(emptyCumulativeState).unsafeRunSync()
+    val testPipeline = new TestPipeline(tweets, None, state)
 
     val f = testPipeline.tweetStream.compile.drain.unsafeToFuture()
 

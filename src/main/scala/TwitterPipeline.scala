@@ -13,9 +13,8 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
 
-object TwitterPipeline extends TwitterPipelineImp
 
-trait TwitterPipelineImp {
+class TwitterPipeline(state: SignallingRef[IO, CumulativeState]) {
 
   implicit val ct = IO.contextShift(ExecutionContext.global)
   implicit val ce = implicitly[ConcurrentEffect[IO]]
@@ -33,7 +32,6 @@ trait TwitterPipelineImp {
   private val req = Request[IO](Method.GET, Uri.uri("https://stream.twitter.com/1.1/statuses/sample.json"))
 
   private val queue = Queue.unbounded[IO, Json]
-  private val state = SignallingRef(emptyCumulativeState).unsafeRunSync()
 
   def snapshot: IO[StatsSnapshot] = state.get.map(StatsSnapshot.fromState)
 
